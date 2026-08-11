@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Un "Organizer" es una cuenta independiente: cada uno tiene su propio
+// slug (ej. /mi-club), su propia clave de acceso y sus propios torneos.
+// Esto es lo que permite que la app se replique para otros organizadores
+// sin que nadie pueda tocar los datos de los demás.
+model Organizer {
+  id                String   @id @default(cuid())
+  slug              String   @unique
+  siteName          String
+  passwordHash      String
+  buyerPasscodeHash String?
+  sheetUrl          String?
+  etherscanKey      String?
+  createdAt         DateTime @default(now())
+
+  tournaments Tournament[]
+}
+
+model Tournament {
+  id          String @id @default(cuid())
+  organizerId String
+  organizer   Organizer @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+
+  name        String
+  // Todos los montos se guardan en "micro-USDT" (USDT * 1e6), como enteros,
+  // para poder comparar montos on-chain sin errores de punto flotante.
+  buyInMicro           Float
+  totalPercent         Float
+  markup               Float
+  maxBullets           Int    @default(1)
+  roiEstimado          Float?
+  pricePerPercentMicro Float
+  walletAddress        String
+  walletAddressEvm     String?
+  deadline             String?
+  status               String @default("activo")
+  liveStatus           String @default("registro")
+  liveNote             String @default("")
+  liveUpdatedAt        DateTime @default(now())
+  createdAt            DateTime @default(now())
+  // Contador sin significado propio: se incrementa al iniciar cada compra
+  // solo para forzar el lock de escritura de SQLite de inmediato (ver
+  // publicRoutes.js) y así serializar la validación de % disponible.
+  version              Int      @default(0)
+
+  purchases Purchase[]
+
+  @@index([organizerId])
+}
+
+model Purchase {
+  id           String @id @default(cuid())
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  code              String @unique
+  buyerName         String
+  buyerContact      String
+  originWallet      String?
+  percent           Float
+  baseAmountMicro   Float
+  uniqueAmountMicro Float
+  network           String
+  walletAddress     String
+  status            String  @default("pendiente")
+  txHash            String?
+  unreadOrganizer   Int     @default(0)
+  lastVerifyAt      DateTime?
+  createdAt         DateTime @default(now())
+
+  messages Message[]
+
+  // Garantiza a nivel de base de datos que dos compras nunca compartan
+  // el mismo monto único dentro del mismo torneo/red (evita ambigüedad
+  // al detectar el pago en la blockchain).
+  @@unique([tournamentId, network, uniqueAmountMicro])
+  @@index([tournamentId])
+}
+
+model Message {
+  id         String @id @default(cuid())
+  purchaseId String
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+  sender    String
+  text      String
+  createdAt DateTime @default(now())
+
+  @@index([purchaseId])
+}
