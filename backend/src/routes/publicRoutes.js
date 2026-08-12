@@ -44,6 +44,7 @@ function serializeTournamentPublic(t, purchases) {
 }
 
 function serializePackagePublic(pkg, purchases) {
+  const pricePerPercentMicro = packagePricePerPercentMicro(pkg.legs);
   return {
     id: pkg.id,
     name: pkg.name,
@@ -57,7 +58,11 @@ function serializePackagePublic(pkg, purchases) {
     createdAt: pkg.createdAt,
     legs: pkg.legs.map(serializeLeg),
     buyInMicro: packageBuyInMicro(pkg.legs),
-    pricePerPercentMicro: packagePricePerPercentMicro(pkg.legs),
+    pricePerPercentMicro,
+    // Lo que le cuesta a un inversor quedarse con TODO lo que se pone a la
+    // venta (totalPercent puede ser menor a 100 si el organizador se
+    // queda con una parte) — no el valor de los torneos al 100%.
+    totalValueMicro: pricePerPercentMicro * pkg.totalPercent,
     maxPossibleMicro: packageMaxPossibleMicro(pkg.legs),
     avgRoiPercent: packageAvgRoiPercent(pkg.legs),
     avgMarkup: packageAvgMarkup(pkg.legs),

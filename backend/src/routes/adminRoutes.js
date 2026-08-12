@@ -121,6 +121,7 @@ adminRoutes.delete('/tournaments/:id', asyncRoute(async (req, res) => {
 
 // --- Paquetes ---
 function serializePackageAdmin(pkg, purchases) {
+  const pricePerPercentMicro = packagePricePerPercentMicro(pkg.legs);
   return {
     id: pkg.id,
     name: pkg.name,
@@ -136,7 +137,8 @@ function serializePackageAdmin(pkg, purchases) {
     createdAt: pkg.createdAt,
     legs: pkg.legs.map(serializeLeg),
     buyInMicro: packageBuyInMicro(pkg.legs),
-    pricePerPercentMicro: packagePricePerPercentMicro(pkg.legs),
+    pricePerPercentMicro,
+    totalValueMicro: pricePerPercentMicro * pkg.totalPercent,
     maxPossibleMicro: packageMaxPossibleMicro(pkg.legs),
     avgRoiPercent: packageAvgRoiPercent(pkg.legs),
     avgMarkup: packageAvgMarkup(pkg.legs),
