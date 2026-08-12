@@ -31,7 +31,7 @@ export default function ProfilePage() {
     <div className="pk-root pk-bg pk-ivory min-h-screen">
       <header className="pk-border border-b px-6 py-4">
         <Link to={`/o/${slug}`} className="pk-display flex items-center gap-2 font-semibold text-lg">
-          <Trophy size={20} className="pk-gold" /> {profile.siteName}
+          <Trophy size={20} className="pk-gold" /> Perfil del Jugador
         </Link>
       </header>
       <main className="max-w-lg mx-auto px-6 py-10">

@@ -32,12 +32,11 @@ export default function BuyerSite() {
     try {
       const s = await api.site(slug);
       setSite(s);
-      if (s.hasGate) {
-        setLocked(true);
-        setLoading(false);
-      } else {
-        await loadListings();
-      }
+      // Si el sitio tiene clave, probamos igual con la cookie que ya
+      // pueda tener el comprador (p. ej. viene de vuelta del perfil del
+      // organizador) — loadListings solo pide la clave si esa cookie
+      // no alcanza.
+      await loadListings();
     } catch {
       setSite(null);
       setLoading(false);
