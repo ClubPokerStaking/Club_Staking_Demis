@@ -98,6 +98,17 @@ body { margin: 0; }
   clip-path: polygon(0 0, 100% 0, 88% 50%, 100% 100%, 0 100%);
 }
 
+/* Agrupa el ROI/markup del paquete junto con el cartel de ventaja,
+   para que se lean como un solo bloque (boceto F). */
+.pk-package-highlight-box {
+  border: 1px solid #2B3B30;
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 /* Panel de estado por torneo dentro del paquete. */
 .pk-leg-status-box {
   border: 1px solid rgba(212,175,55,0.4);

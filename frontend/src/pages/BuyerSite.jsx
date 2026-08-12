@@ -179,9 +179,11 @@ export default function BuyerSite() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <h3 className="pk-display font-semibold text-lg leading-snug">{item.name}</h3>
-                          <div className="flex items-center gap-2 flex-wrap mt-1">
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${live.cls}`}>{live.label}</span>
-                          </div>
+                          {!isPackage && (
+                            <div className="flex items-center gap-2 flex-wrap mt-1">
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${live.cls}`}>{live.label}</span>
+                            </div>
+                          )}
                           {item.buyInMicro > 0 && <p className="pk-ivory-dim text-sm pk-mono mt-1">Buy-in {fmtUSDT(item.buyInMicro)} USDT{isPackage ? ` (${item.legs.length} torneos)` : ''}</p>}
                           {isPackage && (
                             <a
@@ -201,8 +203,15 @@ export default function BuyerSite() {
                           </span>
                         </div>
                       </div>
-                      {isPackage && item.avgEdgePercent != null && (
-                        <EdgeBadge edgePercent={item.avgEdgePercent} variant="hero" label="Ventaja para vos" fullWidth />
+                      {isPackage && item.avgRoiPercent != null && (
+                        <div className="pk-package-highlight-box">
+                          <p className="pk-detail-text pk-gold pk-mono">
+                            ROI est. paquete {item.avgRoiPercent}%{item.avgMarkup != null ? ` · Markup promedio ${Number(item.avgMarkup).toFixed(2)}x` : ''}
+                          </p>
+                          {item.avgEdgePercent != null && (
+                            <EdgeBadge edgePercent={item.avgEdgePercent} variant="hero" label="Ventaja para vos" fullWidth />
+                          )}
+                        </div>
                       )}
                       {isPackage && item.legs.some((l) => l.liveNote) && (
                         <div className="pk-leg-status-box">
@@ -214,14 +223,13 @@ export default function BuyerSite() {
                           ))}
                         </div>
                       )}
-                      <div className="flex items-center gap-3 pk-detail-text pk-ivory-dim pk-mono flex-wrap">
-                        {item.markup != null && <span>Markup {Number(item.markup).toFixed(2)}x</span>}
-                        {item.maxBullets > 1 && <span>Hasta {item.maxBullets} balas</span>}
-                        {item.roiEstimado != null && <span>ROI est. {item.roiEstimado}%</span>}
-                        {isPackage && item.avgRoiPercent != null && (
-                          <span className="pk-gold">ROI est. paquete {item.avgRoiPercent}%{item.avgMarkup != null ? ` · Markup promedio ${Number(item.avgMarkup).toFixed(2)}x` : ''}</span>
-                        )}
-                      </div>
+                      {!isPackage && (
+                        <div className="flex items-center gap-3 pk-detail-text pk-ivory-dim pk-mono flex-wrap">
+                          {item.markup != null && <span>Markup {Number(item.markup).toFixed(2)}x</span>}
+                          {item.maxBullets > 1 && <span>Hasta {item.maxBullets} balas</span>}
+                          {item.roiEstimado != null && <span>ROI est. {item.roiEstimado}%</span>}
+                        </div>
+                      )}
                       {isPackage && (
                         <div className="flex items-center gap-4 flex-wrap">
                           <button
