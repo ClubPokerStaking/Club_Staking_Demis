@@ -208,6 +208,11 @@ export default function BuyerSite() {
                       </div>
                       {isPackage && item.avgRoiPercent != null && (
                         <div className="pk-package-highlight-box">
+                          {item.pricePerPercentMicro > 0 && (
+                            <p className="pk-gold pk-mono font-bold" style={{ fontSize: '1.15rem' }}>
+                              {fmtUSDT(item.pricePerPercentMicro)} USDT <span className="pk-ivory-dim font-normal text-sm">por cada 1% (acción)</span>
+                            </p>
+                          )}
                           <div className="flex items-center gap-3 flex-wrap pk-detail-text pk-gold pk-mono">
                             <span>ROI est. paquete {item.avgRoiPercent}%</span>
                             {item.avgMarkup != null && <span>Markup promedio {Number(item.avgMarkup).toFixed(2)}x</span>}

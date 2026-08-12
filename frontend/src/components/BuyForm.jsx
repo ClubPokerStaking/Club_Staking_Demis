@@ -45,6 +45,11 @@ export default function BuyForm({ product, onSubmit }) {
         )}
         {isPackage && product.avgRoiPercent != null && (
           <div className="pk-package-highlight-box mt-3">
+            {product.pricePerPercentMicro > 0 && (
+              <p className="pk-gold pk-mono font-bold" style={{ fontSize: '1.15rem' }}>
+                {fmtUSDT(product.pricePerPercentMicro)} USDT <span className="pk-ivory-dim font-normal text-sm">por cada 1% (acción)</span>
+              </p>
+            )}
             <div className="flex items-center gap-3 flex-wrap pk-detail-text pk-gold pk-mono">
               <span>ROI est. paquete: {product.avgRoiPercent}%</span>
               {product.avgMarkup != null && <span>Markup promedio {Number(product.avgMarkup).toFixed(2)}x</span>}
