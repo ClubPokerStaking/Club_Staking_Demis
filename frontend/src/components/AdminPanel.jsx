@@ -566,11 +566,13 @@ function ProfileConfigSection({ config, onSaved, onToast }) {
       <p className="text-sm pk-ivory-dim font-medium">Tu perfil público — lo ve cualquiera que abra "Perfil del organizador" desde un paquete tuyo.</p>
       <label className="text-sm pk-ivory-dim">
         Bio / presentación
-        <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} placeholder="Contá quién sos, tu experiencia jugando..." className={inputCls} style={{ resize: 'vertical' }} />
+        <textarea value={bio} onChange={(e) => setBio(e.target.value.slice(0, 4000))} maxLength={4000} rows={6} placeholder="Contá quién sos, tu experiencia jugando..." className={inputCls} style={{ resize: 'vertical' }} />
+        <span className={`text-xs ${bio.length >= 4000 ? 'pk-brick' : 'pk-ivory-dim'}`}>{bio.length}/4000</span>
       </label>
       <label className="text-sm pk-ivory-dim">
         Logros / medallas — uno por línea
-        <textarea value={achievements} onChange={(e) => setAchievements(e.target.value)} rows={3} placeholder={'ej:\n1x brazalete WSOP 2022\n3x cashes en el Main Event'} className={inputCls} style={{ resize: 'vertical' }} />
+        <textarea value={achievements} onChange={(e) => setAchievements(e.target.value.slice(0, 2000))} maxLength={2000} rows={3} placeholder={'ej:\n1x brazalete WSOP 2022\n3x cashes en el Main Event'} className={inputCls} style={{ resize: 'vertical' }} />
+        <span className={`text-xs ${achievements.length >= 2000 ? 'pk-brick' : 'pk-ivory-dim'}`}>{achievements.length}/2000</span>
       </label>
       <label className="text-sm pk-ivory-dim">
         Foto (URL https://)

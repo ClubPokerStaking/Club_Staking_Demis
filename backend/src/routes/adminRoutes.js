@@ -397,7 +397,7 @@ adminRoutes.put('/site-config', asyncRoute(async (req, res) => {
     data.sheetUrl = url || null;
   }
   if (typeof body.etherscanKey === 'string') data.etherscanKey = body.etherscanKey.trim() || null;
-  if (typeof body.profileBio === 'string') data.profileBio = body.profileBio.trim().slice(0, 1000) || null;
+  if (typeof body.profileBio === 'string') data.profileBio = body.profileBio.trim().slice(0, 4000) || null;
   if (typeof body.profileAchievements === 'string') data.profileAchievements = body.profileAchievements.trim().slice(0, 2000) || null;
   if (typeof body.profilePhotoUrl === 'string') {
     const url = body.profilePhotoUrl.trim();
