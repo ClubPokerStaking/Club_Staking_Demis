@@ -38,6 +38,7 @@ export const api = {
   messages: (id, code) => get(`/public/purchases/${id}/messages?code=${encodeURIComponent(code)}`),
   sendMessage: (id, code, text) => post(`/public/purchases/${id}/messages`, { code, text }),
   networks: () => get('/public/networks'),
+  profile: (slug) => get(`/public/${slug}/profile`),
 
   // admin
   adminTournaments: () => get('/admin/tournaments'),

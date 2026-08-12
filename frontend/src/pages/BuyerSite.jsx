@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Trophy, Search, Lock, RefreshCw, Loader2, Clock, ChevronDown, ChevronUp, Eye, EyeOff } from 'lucide-react';
+import { Trophy, Search, Lock, RefreshCw, Loader2, Clock, ChevronDown, ChevronUp, Eye, EyeOff, UserCircle2 } from 'lucide-react';
 import { api } from '../api.js';
 import { fmtUSDT, LIVE_STATUS_MAP } from '../format.js';
 import BuyForm from '../components/BuyForm.jsx';
@@ -204,13 +204,23 @@ export default function BuyerSite() {
                         {isPackage && item.avgRoiPercent != null && <span className="pk-gold">ROI est. paquete {item.avgRoiPercent}%</span>}
                       </div>
                       {isPackage && (
-                        <button
-                          type="button"
-                          onClick={() => setExpandedId(expanded ? null : item.id)}
-                          className="text-xs pk-gold hover:underline flex items-center gap-1 self-start"
-                        >
-                          {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />} {expanded ? 'Ocultar desglose' : 'Ver qué incluye'}
-                        </button>
+                        <div className="flex items-center gap-4 flex-wrap">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedId(expanded ? null : item.id)}
+                            className="text-xs pk-gold hover:underline flex items-center gap-1"
+                          >
+                            {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />} {expanded ? 'Ocultar desglose' : 'Ver qué incluye'}
+                          </button>
+                          <a
+                            href={`/o/${slug}/perfil`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs pk-ivory-dim hover:opacity-80 flex items-center gap-1"
+                          >
+                            <UserCircle2 size={12} /> Perfil del organizador
+                          </a>
+                        </div>
                       )}
                       {isPackage && expanded && (
                         <div className="pk-bg pk-border border rounded-xl p-3 flex flex-col gap-2">

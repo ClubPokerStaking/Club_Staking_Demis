@@ -19,6 +19,13 @@ model Organizer {
   buyerPasscodeHash String?
   sheetUrl          String?
   etherscanKey      String?
+  // Perfil público del jugador/organizador — no son secretos, se
+  // muestran tal cual a cualquier comprador que abra /o/slug/perfil.
+  profileBio          String?
+  // Logros/medallas, uno por línea (ej. "1x brazalete WSOP 2022").
+  profileAchievements String?
+  profilePhotoUrl     String?
+  profileSocialLink   String?
   createdAt         DateTime @default(now())
 
   tournaments Tournament[]

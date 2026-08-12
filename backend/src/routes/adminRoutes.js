@@ -353,6 +353,12 @@ adminRoutes.get('/site-config', (req, res) => {
     hasBuyerPasscode: !!o.buyerPasscodeHash,
     hasSheetUrl: !!o.sheetUrl,
     hasEtherscanKey: !!o.etherscanKey,
+    // El perfil no es secreto — a diferencia de las claves de arriba, se
+    // devuelve tal cual para poder editarlo con normalidad.
+    profileBio: o.profileBio || '',
+    profileAchievements: o.profileAchievements || '',
+    profilePhotoUrl: o.profilePhotoUrl || '',
+    profileSocialLink: o.profileSocialLink || '',
   });
 });
 
@@ -371,6 +377,18 @@ adminRoutes.put('/site-config', asyncRoute(async (req, res) => {
     data.sheetUrl = url || null;
   }
   if (typeof body.etherscanKey === 'string') data.etherscanKey = body.etherscanKey.trim() || null;
+  if (typeof body.profileBio === 'string') data.profileBio = body.profileBio.trim().slice(0, 1000) || null;
+  if (typeof body.profileAchievements === 'string') data.profileAchievements = body.profileAchievements.trim().slice(0, 2000) || null;
+  if (typeof body.profilePhotoUrl === 'string') {
+    const url = body.profilePhotoUrl.trim();
+    if (url && !/^https:\/\//.test(url)) throw new HttpError(400, 'La foto tiene que ser una URL https://');
+    data.profilePhotoUrl = url || null;
+  }
+  if (typeof body.profileSocialLink === 'string') {
+    const url = body.profileSocialLink.trim();
+    if (url && !/^https:\/\//.test(url)) throw new HttpError(400, 'El link tiene que ser una URL https://');
+    data.profileSocialLink = url || null;
+  }
 
   const updated = await prisma.organizer.update({ where: { id: req.organizer.id }, data });
   res.json({
@@ -378,6 +396,10 @@ adminRoutes.put('/site-config', asyncRoute(async (req, res) => {
     hasBuyerPasscode: !!updated.buyerPasscodeHash,
     hasSheetUrl: !!updated.sheetUrl,
     hasEtherscanKey: !!updated.etherscanKey,
+    profileBio: updated.profileBio || '',
+    profileAchievements: updated.profileAchievements || '',
+    profilePhotoUrl: updated.profilePhotoUrl || '',
+    profileSocialLink: updated.profileSocialLink || '',
   });
 }));
 

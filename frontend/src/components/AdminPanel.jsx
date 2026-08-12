@@ -252,6 +252,7 @@ export default function AdminPanel({ onLogout }) {
       {toast && <div className="pk-bg-gold-soft pk-border-gold border pk-gold text-sm rounded-xl px-4 py-2 text-center">{toast}</div>}
 
       <SiteConfigSection config={config} onSaved={setConfig} onToast={setToast} />
+      <ProfileConfigSection config={config} onSaved={setConfig} onToast={setToast} />
 
       {showForm && (
         <div className="pk-surface pk-border border rounded-2xl p-5 grid sm:grid-cols-2 gap-3">
@@ -521,6 +522,51 @@ function SiteConfigSection({ config, onSaved, onToast }) {
         )}
       </div>
       <p className="text-xs pk-ivory-dim opacity-70">Por seguridad, estas claves nunca se muestran de nuevo una vez guardadas: solo indicamos si están configuradas.</p>
+    </div>
+  );
+}
+
+function ProfileConfigSection({ config, onSaved, onToast }) {
+  const [bio, setBio] = useState(config.profileBio || '');
+  const [achievements, setAchievements] = useState(config.profileAchievements || '');
+  const [photoUrl, setPhotoUrl] = useState(config.profilePhotoUrl || '');
+  const [socialLink, setSocialLink] = useState(config.profileSocialLink || '');
+
+  async function save() {
+    try {
+      const updated = await api.adminSaveSiteConfig({
+        profileBio: bio,
+        profileAchievements: achievements,
+        profilePhotoUrl: photoUrl,
+        profileSocialLink: socialLink,
+      });
+      onSaved(updated);
+      onToast('Perfil guardado ✓');
+    } catch (e) {
+      onToast(e.message);
+    }
+  }
+
+  return (
+    <div className="pk-surface pk-border border rounded-2xl p-4 flex flex-col gap-3">
+      <p className="text-sm pk-ivory-dim font-medium">Tu perfil público — lo ve cualquiera que abra "Perfil del organizador" desde un paquete tuyo.</p>
+      <label className="text-sm pk-ivory-dim">
+        Bio / presentación
+        <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} placeholder="Contá quién sos, tu experiencia jugando..." className={inputCls} style={{ resize: 'vertical' }} />
+      </label>
+      <label className="text-sm pk-ivory-dim">
+        Logros / medallas — uno por línea
+        <textarea value={achievements} onChange={(e) => setAchievements(e.target.value)} rows={3} placeholder={'ej:\n1x brazalete WSOP 2022\n3x cashes en el Main Event'} className={inputCls} style={{ resize: 'vertical' }} />
+      </label>
+      <label className="text-sm pk-ivory-dim">
+        Foto (URL https://)
+        <input value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} placeholder="https://..." className={`${inputCls} pk-mono`} />
+      </label>
+      <label className="text-sm pk-ivory-dim">
+        Link a tus redes (opcional, URL https://)
+        <input value={socialLink} onChange={(e) => setSocialLink(e.target.value)} placeholder="https://x.com/tu_usuario" className={`${inputCls} pk-mono`} />
+      </label>
+      <button type="button" onClick={save} className="pk-bg-gold pk-onGold font-medium rounded-lg py-2 text-sm self-start px-4 hover:opacity-90">Guardar perfil</button>
     </div>
   );
 }

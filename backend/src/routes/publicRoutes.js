@@ -97,6 +97,17 @@ publicRoutes.get('/:slug/site', loadOrganizerPublic, (req, res) => {
   res.json({ siteName: req.organizerPublic.siteName, hasGate: !!req.organizerPublic.buyerPasscodeHash });
 });
 
+publicRoutes.get('/:slug/profile', loadOrganizerPublic, (req, res, next) => buyerGateFor(req.params.slug)(req, res, next), (req, res) => {
+  const p = req.organizerPublic;
+  res.json({
+    siteName: p.siteName,
+    bio: p.profileBio || '',
+    achievements: (p.profileAchievements || '').split('\n').map((s) => s.trim()).filter(Boolean),
+    photoUrl: p.profilePhotoUrl || '',
+    socialLink: p.profileSocialLink || '',
+  });
+});
+
 publicRoutes.post('/:slug/unlock', unlockLimiter, loadOrganizerPublic, asyncRoute(async (req, res) => {
   const { passcode } = req.body || {};
   if (!req.organizerPublic.buyerPasscodeHash) return res.json({ ok: true });

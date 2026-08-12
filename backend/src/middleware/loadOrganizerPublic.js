@@ -10,6 +10,10 @@ export async function loadOrganizerPublic(req, res, next) {
   req.organizerPublic = {
     siteName: organizer.siteName,
     buyerPasscodeHash: organizer.buyerPasscodeHash,
+    profileBio: organizer.profileBio,
+    profileAchievements: organizer.profileAchievements,
+    profilePhotoUrl: organizer.profilePhotoUrl,
+    profileSocialLink: organizer.profileSocialLink,
   };
   req.organizerSecrets = {
     etherscanKey: organizer.etherscanKey,
