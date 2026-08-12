@@ -39,17 +39,14 @@ export default function BuyForm({ product, onSubmit }) {
     <div className="pk-surface pk-border border rounded-2xl p-6 flex flex-col gap-4">
       <div>
         <h2 className="pk-display text-xl font-semibold">{product.name}</h2>
-        <p className="pk-ivory-dim pk-detail-text pk-mono">Disponible: {product.availablePercent.toFixed(2)}% · {fmtUSDT(product.pricePerPercentMicro)} USDT por 1%{product.markup != null ? ` (markup ${Number(product.markup).toFixed(2)}x)` : ''}</p>
+        <p className="pk-ivory-dim pk-detail-text pk-mono">
+          Disponible: {product.availablePercent.toFixed(2)}% · <span className="pk-gold font-bold" style={{ fontSize: '1.1em' }}>{fmtUSDT(product.pricePerPercentMicro)} USDT</span> por 1% (acción){product.markup != null ? ` (markup ${Number(product.markup).toFixed(2)}x)` : ''}
+        </p>
         {isPackage && product.totalValueMicro > 0 && (
           <p className="pk-ivory-dim pk-detail-text pk-mono mt-1">Valor total del paquete a la venta: {fmtUSDT(product.totalValueMicro)} USDT ({product.legs?.length} torneos)</p>
         )}
         {isPackage && product.avgRoiPercent != null && (
           <div className="pk-package-highlight-box mt-3">
-            {product.pricePerPercentMicro > 0 && (
-              <p className="pk-gold pk-mono font-bold" style={{ fontSize: '1.15rem' }}>
-                {fmtUSDT(product.pricePerPercentMicro)} USDT <span className="pk-ivory-dim font-normal text-sm">por cada 1% (acción)</span>
-              </p>
-            )}
             <div className="flex items-center gap-3 flex-wrap pk-detail-text pk-gold pk-mono">
               <span>ROI est. paquete: {product.avgRoiPercent}%</span>
               {product.avgMarkup != null && <span>Markup promedio {Number(product.avgMarkup).toFixed(2)}x</span>}

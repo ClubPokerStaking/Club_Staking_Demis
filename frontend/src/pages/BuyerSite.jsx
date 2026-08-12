@@ -199,20 +199,22 @@ export default function BuyerSite() {
                             </a>
                           )}
                         </div>
-                        <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        <div className="flex flex-col items-end gap-1 shrink-0">
                           {isPackage && <span className="pk-badge-flag">PAQUETE</span>}
-                          <span className="pk-bg-gold-soft pk-gold pk-border-gold border pk-mono text-xs px-2 py-1 rounded-full whitespace-nowrap">
-                            {fmtUSDT(item.pricePerPercentMicro)} / 1%
-                          </span>
+                          {isPackage ? (
+                            <div className="flex flex-col items-end" style={{ lineHeight: 1.15 }}>
+                              <span className="pk-gold pk-mono font-bold" style={{ fontSize: '1.2rem' }}>{fmtUSDT(item.pricePerPercentMicro)}</span>
+                              <span className="pk-ivory-dim text-[10px] whitespace-nowrap">USDT por 1% (acción)</span>
+                            </div>
+                          ) : (
+                            <span className="pk-bg-gold-soft pk-gold pk-border-gold border pk-mono text-xs px-2 py-1 rounded-full whitespace-nowrap">
+                              {fmtUSDT(item.pricePerPercentMicro)} / 1%
+                            </span>
+                          )}
                         </div>
                       </div>
                       {isPackage && item.avgRoiPercent != null && (
                         <div className="pk-package-highlight-box">
-                          {item.pricePerPercentMicro > 0 && (
-                            <p className="pk-gold pk-mono font-bold" style={{ fontSize: '1.15rem' }}>
-                              {fmtUSDT(item.pricePerPercentMicro)} USDT <span className="pk-ivory-dim font-normal text-sm">por cada 1% (acción)</span>
-                            </p>
-                          )}
                           <div className="flex items-center gap-3 flex-wrap pk-detail-text pk-gold pk-mono">
                             <span>ROI est. paquete {item.avgRoiPercent}%</span>
                             {item.avgMarkup != null && <span>Markup promedio {Number(item.avgMarkup).toFixed(2)}x</span>}
