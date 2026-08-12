@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Trophy, Search, Lock, RefreshCw, Loader2, Clock } from 'lucide-react';
+import { Trophy, Search, Lock, RefreshCw, Loader2, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { api } from '../api.js';
 import { fmtUSDT, LIVE_STATUS_MAP } from '../format.js';
 import BuyForm from '../components/BuyForm.jsx';
@@ -15,10 +15,11 @@ export default function BuyerSite() {
   const [gateError, setGateError] = useState('');
 
   const [view, setView] = useState('browse');
-  const [tournaments, setTournaments] = useState([]);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
   const [activePurchase, setActivePurchase] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
 
   const [lookupCode, setLookupCode] = useState('');
   const [lookupResult, setLookupResult] = useState(undefined);
@@ -33,7 +34,7 @@ export default function BuyerSite() {
         setLocked(true);
         setLoading(false);
       } else {
-        await loadTournaments();
+        await loadListings();
       }
     } catch {
       setSite(null);
@@ -41,10 +42,15 @@ export default function BuyerSite() {
     }
   }
 
-  async function loadTournaments() {
+  async function loadListings() {
     setLoading(true);
     try {
-      setTournaments(await api.tournaments(slug));
+      const [tournaments, packages] = await Promise.all([api.tournaments(slug), api.packages(slug)]);
+      const merged = [
+        ...tournaments.map((t) => ({ ...t, kind: 'tournament' })),
+        ...packages.map((p) => ({ ...p, kind: 'package' })),
+      ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setItems(merged);
       setLocked(false);
     } catch (e) {
       if (e.message.includes('403') || e.message === 'gate_locked') setLocked(true);
@@ -57,22 +63,24 @@ export default function BuyerSite() {
     try {
       await api.unlock(slug, gateInput);
       setGateError('');
-      await loadTournaments();
+      await loadListings();
     } catch (e) {
       setGateError(e.message || 'Código incorrecto');
     }
   }
 
-  function openBuy(t) {
-    setSelected(t);
+  function openBuy(item) {
+    setSelected(item);
     setActivePurchase(null);
     setView('buy');
   }
 
   async function submitPurchase(payload) {
-    const purchase = await api.buy(slug, selected.id, payload);
+    const purchase = selected.kind === 'package'
+      ? await api.buyPackage(slug, selected.id, payload)
+      : await api.buy(slug, selected.id, payload);
     setActivePurchase(purchase);
-    loadTournaments();
+    loadListings();
   }
 
   async function doLookup() {
@@ -134,46 +142,68 @@ export default function BuyerSite() {
           <div>
             <div className="flex items-center justify-between mb-6">
               <h1 className="pk-display text-2xl font-semibold">Acción en venta</h1>
-              <button onClick={loadTournaments} className="text-sm pk-ivory-dim hover:opacity-80 flex items-center gap-1">
+              <button onClick={loadListings} className="text-sm pk-ivory-dim hover:opacity-80 flex items-center gap-1">
                 <RefreshCw size={16} /> Actualizar
               </button>
             </div>
             {loading ? (
               <div className="pk-ivory-dim flex items-center gap-2"><Loader2 size={16} className="animate-spin" /> Cargando...</div>
-            ) : tournaments.length === 0 ? (
-              <div className="pk-ivory-dim pk-border border border-dashed rounded-2xl p-10 text-center">Todavía no hay torneos publicados.</div>
+            ) : items.length === 0 ? (
+              <div className="pk-ivory-dim pk-border border border-dashed rounded-2xl p-10 text-center">Todavía no hay nada publicado.</div>
             ) : (
               <div className="grid sm:grid-cols-2 gap-5">
-                {tournaments.map((t) => {
-                  const soldPct = t.totalPercent > 0 ? ((t.totalPercent - t.availablePercent) / t.totalPercent) * 100 : 0;
-                  const live = LIVE_STATUS_MAP[t.liveStatus] || LIVE_STATUS_MAP.registro;
+                {items.map((item) => {
+                  const soldPct = item.totalPercent > 0 ? ((item.totalPercent - item.availablePercent) / item.totalPercent) * 100 : 0;
+                  const live = LIVE_STATUS_MAP[item.liveStatus] || LIVE_STATUS_MAP.registro;
+                  const isPackage = item.kind === 'package';
+                  const expanded = expandedId === item.id;
                   return (
-                    <div key={t.id} className="pk-ticket pk-surface pk-border border rounded-2xl p-5 pl-7 flex flex-col gap-3">
+                    <div key={item.id} className="pk-ticket pk-surface pk-border border rounded-2xl p-5 pl-7 flex flex-col gap-3">
                       <div className="pk-notch pk-notch-top" />
                       <div className="pk-notch pk-notch-bottom" />
                       <div className="pk-perforation" />
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="pk-display font-semibold text-lg leading-snug">{t.name}</h3>
+                            <h3 className="pk-display font-semibold text-lg leading-snug">{item.name}</h3>
+                            {isPackage && <span className="text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap pk-bg-straw-soft pk-straw">PAQUETE</span>}
                             <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${live.cls}`}>{live.label}</span>
                           </div>
-                          {t.buyInMicro > 0 && <p className="pk-ivory-dim text-sm pk-mono">Buy-in {fmtUSDT(t.buyInMicro)} USDT</p>}
-                          {t.liveNote && <p className="pk-ivory-dim text-xs mt-0.5">{t.liveNote}</p>}
+                          {item.buyInMicro > 0 && <p className="pk-ivory-dim text-sm pk-mono">Buy-in {fmtUSDT(item.buyInMicro)} USDT{isPackage ? ` (${item.legs.length} torneos)` : ''}</p>}
+                          {item.liveNote && <p className="pk-ivory-dim text-xs mt-0.5">{item.liveNote}</p>}
                         </div>
                         <span className="pk-bg-gold-soft pk-gold pk-border-gold border pk-mono text-xs px-2 py-1 rounded-full whitespace-nowrap">
-                          {fmtUSDT(t.pricePerPercentMicro)} / 1%
+                          {fmtUSDT(item.pricePerPercentMicro)} / 1%
                         </span>
                       </div>
                       <div className="flex items-center gap-3 text-xs pk-ivory-dim pk-mono">
-                        {t.markup != null && <span>Markup {Number(t.markup).toFixed(2)}x</span>}
-                        {t.maxBullets > 1 && <span>Hasta {t.maxBullets} balas</span>}
-                        {t.roiEstimado != null && <span>ROI est. {t.roiEstimado}%</span>}
+                        {item.markup != null && <span>Markup {Number(item.markup).toFixed(2)}x</span>}
+                        {item.maxBullets > 1 && <span>Hasta {item.maxBullets} balas</span>}
+                        {item.roiEstimado != null && <span>ROI est. {item.roiEstimado}%</span>}
                       </div>
-                      {t.deadline && <p className="text-xs pk-ivory-dim flex items-center gap-1"><Clock size={12} /> Cierra: {t.deadline}</p>}
+                      {isPackage && (
+                        <button
+                          type="button"
+                          onClick={() => setExpandedId(expanded ? null : item.id)}
+                          className="text-xs pk-gold hover:underline flex items-center gap-1 self-start"
+                        >
+                          {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />} {expanded ? 'Ocultar desglose' : 'Ver qué incluye'}
+                        </button>
+                      )}
+                      {isPackage && expanded && (
+                        <div className="pk-bg pk-border border rounded-xl p-3 flex flex-col gap-1.5">
+                          {item.legs.map((l) => (
+                            <div key={l.id} className="flex items-center justify-between text-xs pk-mono">
+                              <span className="pk-ivory">{l.name}</span>
+                              <span className="pk-ivory-dim">{fmtUSDT(l.buyInMicro)} USDT{l.roiEstimado != null ? ` · ROI ${l.roiEstimado}%` : ''}{l.maxBullets > 1 ? ` · hasta ${l.maxBullets} balas` : ''}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {item.deadline && <p className="text-xs pk-ivory-dim flex items-center gap-1"><Clock size={12} /> Cierra: {item.deadline}</p>}
                       <div>
                         <div className="flex justify-between text-xs pk-ivory-dim mb-1 pk-mono">
-                          <span>{t.availablePercent.toFixed(2)}% disponible</span>
+                          <span>{item.availablePercent.toFixed(2)}% disponible</span>
                           <span>{soldPct.toFixed(0)}% vendido</span>
                         </div>
                         <div className="h-1.5 pk-surface2 rounded-full overflow-hidden">
@@ -181,11 +211,11 @@ export default function BuyerSite() {
                         </div>
                       </div>
                       <button
-                        disabled={t.availablePercent <= 0}
-                        onClick={() => openBuy(t)}
-                        className={`mt-2 font-medium rounded-xl py-2 transition-opacity ${t.availablePercent <= 0 ? 'pk-surface2 pk-ivory-dim' : 'pk-bg-gold pk-onGold hover:opacity-90'}`}
+                        disabled={item.availablePercent <= 0}
+                        onClick={() => openBuy(item)}
+                        className={`mt-2 font-medium rounded-xl py-2 transition-opacity ${item.availablePercent <= 0 ? 'pk-surface2 pk-ivory-dim' : 'pk-bg-gold pk-onGold hover:opacity-90'}`}
                       >
-                        {t.availablePercent <= 0 ? 'Agotado' : 'Comprar acción'}
+                        {item.availablePercent <= 0 ? 'Agotado' : isPackage ? 'Comprar paquete' : 'Comprar acción'}
                       </button>
                     </div>
                   );
@@ -199,7 +229,7 @@ export default function BuyerSite() {
           <div className="max-w-lg mx-auto">
             <button onClick={() => setView('browse')} className="pk-ivory-dim hover:opacity-80 flex items-center gap-1 text-sm mb-4">← Volver</button>
             {!activePurchase ? (
-              <BuyForm tournament={selected} onSubmit={submitPurchase} />
+              <BuyForm product={selected} onSubmit={submitPurchase} />
             ) : (
               <PaymentScreen purchase={activePurchase} onUpdated={setActivePurchase} />
             )}
@@ -224,13 +254,23 @@ export default function BuyerSite() {
               <div className="pk-surface pk-border border rounded-2xl p-5 flex flex-col gap-3">
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-semibold pk-display">{lookupResult.tournamentName}</p>
+                    <p className="font-semibold pk-display">{lookupResult.productName}</p>
                     {(() => {
                       const ls = LIVE_STATUS_MAP[lookupResult.liveStatus] || LIVE_STATUS_MAP.registro;
                       return <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${ls.cls}`}>{ls.label}</span>;
                     })()}
                   </div>
                   <p className="pk-ivory-dim text-sm pk-mono">{lookupResult.percent}% · {fmtUSDT(lookupResult.uniqueAmountMicro)} USDT</p>
+                  {lookupResult.productType === 'package' && lookupResult.legs && (
+                    <div className="pk-bg pk-border border rounded-xl p-3 mt-2 flex flex-col gap-1">
+                      {lookupResult.legs.map((l) => (
+                        <div key={l.id} className="flex items-center justify-between text-xs pk-mono">
+                          <span className="pk-ivory">{l.name}</span>
+                          <span className="pk-ivory-dim">{fmtUSDT(l.buyInMicro)} USDT</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   {lookupResult.liveNote && <p className="pk-ivory-dim text-xs mt-0.5">{lookupResult.liveNote}</p>}
                   <p className={`mt-2 text-sm font-medium ${lookupResult.status === 'confirmado' ? 'pk-gold' : lookupResult.status === 'rechazado' ? 'pk-brick' : 'pk-straw'}`}>
                     Estado del pago: {lookupResult.status}

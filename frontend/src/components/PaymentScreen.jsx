@@ -54,7 +54,18 @@ export default function PaymentScreen({ purchase, onUpdated }) {
       ) : (
         <div className="flex items-center gap-2 pk-straw font-semibold"><Clock size={20} /> Esperando pago</div>
       )}
-      <p className="pk-ivory-dim text-sm">{purchase.tournamentName} · {purchase.percent}% de acción</p>
+      <p className="pk-ivory-dim text-sm">{purchase.productName} · {purchase.percent}% de acción</p>
+      {purchase.productType === 'package' && purchase.legs && (
+        <div className="pk-bg pk-border border rounded-xl p-3 flex flex-col gap-1">
+          <p className="text-xs pk-ivory-dim mb-0.5">Incluye:</p>
+          {purchase.legs.map((l) => (
+            <div key={l.id} className="flex items-center justify-between text-xs pk-mono">
+              <span className="pk-ivory">{l.name}</span>
+              <span className="pk-ivory-dim">{fmtUSDT(l.buyInMicro)} USDT</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="flex justify-center py-2">
         <img src={qrUrl} alt="QR de la wallet" className="rounded-lg" style={{ background: 'white', padding: 8, border: '2px solid rgba(212,175,55,0.4)' }} width={180} height={180} />

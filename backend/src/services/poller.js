@@ -22,12 +22,16 @@ async function runOnce() {
       createdAt: { gte: cutoff },
       OR: [{ lastVerifyAt: null }, { lastVerifyAt: { lt: recheckCutoff } }],
     },
-    include: { tournament: { include: { organizer: true } } },
+    include: {
+      tournament: { include: { organizer: true } },
+      package: { include: { organizer: true } },
+    },
   });
 
   for (const purchase of pending) {
     try {
-      await verifyPurchase(purchase, purchase.tournament.organizer.etherscanKey);
+      const organizer = purchase.packageId ? purchase.package.organizer : purchase.tournament.organizer;
+      await verifyPurchase(purchase, organizer.etherscanKey);
     } catch (err) {
       await prisma.purchase.update({ where: { id: purchase.id }, data: { lastVerifyAt: new Date() } }).catch(() => {});
       console.error(`[poller] error verificando compra ${purchase.id}:`, err.message);

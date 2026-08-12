@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { fmtUSDT, NETWORKS } from '../format.js';
 
-export default function BuyForm({ tournament, onSubmit }) {
+export default function BuyForm({ product, onSubmit }) {
   const [percent, setPercent] = useState('');
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
@@ -11,14 +11,15 @@ export default function BuyForm({ tournament, onSubmit }) {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const hasEvm = tournament.hasEvm;
+  const hasEvm = product.hasEvm;
+  const isPackage = product.kind === 'package';
   const p = parseFloat(percent) || 0;
-  const totalMicro = Math.round(p * tournament.pricePerPercentMicro);
+  const totalMicro = Math.round(p * product.pricePerPercentMicro);
   const inputCls = 'mt-1 w-full pk-bg pk-border border pk-ivory rounded-lg px-3 py-2 focus:outline-none';
 
   async function handleSubmit() {
     if (!p || p <= 0) { setError('Ingresá un porcentaje válido'); return; }
-    if (p > tournament.availablePercent + 0.001) { setError(`Solo quedan ${tournament.availablePercent.toFixed(2)}% disponibles`); return; }
+    if (p > product.availablePercent + 0.001) { setError(`Solo quedan ${product.availablePercent.toFixed(2)}% disponibles`); return; }
     if (!name.trim() || !contact.trim()) { setError('Completá tu nombre y un contacto'); return; }
     setError('');
     setSubmitting(true);
@@ -36,9 +37,20 @@ export default function BuyForm({ tournament, onSubmit }) {
   return (
     <div className="pk-surface pk-border border rounded-2xl p-6 flex flex-col gap-4">
       <div>
-        <h2 className="pk-display text-xl font-semibold">{tournament.name}</h2>
-        <p className="pk-ivory-dim text-sm pk-mono">Disponible: {tournament.availablePercent.toFixed(2)}% · {fmtUSDT(tournament.pricePerPercentMicro)} USDT por 1%{tournament.markup != null ? ` (markup ${Number(tournament.markup).toFixed(2)}x)` : ''}</p>
+        <h2 className="pk-display text-xl font-semibold">{product.name}</h2>
+        <p className="pk-ivory-dim text-sm pk-mono">Disponible: {product.availablePercent.toFixed(2)}% · {fmtUSDT(product.pricePerPercentMicro)} USDT por 1%{product.markup != null ? ` (markup ${Number(product.markup).toFixed(2)}x)` : ''}</p>
       </div>
+      {isPackage && product.legs && (
+        <div className="pk-bg pk-border border rounded-xl p-3 flex flex-col gap-1.5">
+          <p className="text-xs pk-ivory-dim">Este paquete incluye:</p>
+          {product.legs.map((l) => (
+            <div key={l.id} className="flex items-center justify-between text-xs pk-mono">
+              <span className="pk-ivory">{l.name}</span>
+              <span className="pk-ivory-dim">{fmtUSDT(l.buyInMicro)} USDT{l.roiEstimado != null ? ` · ROI ${l.roiEstimado}%` : ''}{l.maxBullets > 1 ? ` · hasta ${l.maxBullets} balas` : ''}</span>
+            </div>
+          ))}
+        </div>
+      )}
       {hasEvm && (
         <label className="text-sm pk-ivory-dim">
           Red para pagar
@@ -51,7 +63,7 @@ export default function BuyForm({ tournament, onSubmit }) {
       )}
       <label className="text-sm pk-ivory-dim">
         Porcentaje a comprar
-        <input type="number" min="0.1" max={tournament.availablePercent} step="0.1" value={percent} onChange={(e) => setPercent(e.target.value)} onKeyDown={onEnter} className={inputCls} placeholder="ej: 5" />
+        <input type="number" min="0.1" max={product.availablePercent} step="0.1" value={percent} onChange={(e) => setPercent(e.target.value)} onKeyDown={onEnter} className={inputCls} placeholder="ej: 5" />
       </label>
       {p > 0 && <p className="text-sm pk-ivory-dim">Total a pagar: <span className="pk-gold font-semibold pk-mono">{fmtUSDT(totalMicro)} USDT</span></p>}
       <label className="text-sm pk-ivory-dim">

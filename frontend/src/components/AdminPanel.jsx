@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Plus, Settings, LogOut, RefreshCw, Loader2, MessageCircle } from 'lucide-react';
+import { Plus, Settings, LogOut, RefreshCw, Loader2, MessageCircle, Trash2, PackagePlus } from 'lucide-react';
 import { api } from '../api.js';
 import { fmtUSDT } from '../format.js';
 import ChatThread from './ChatThread.jsx';
+import PackageForm, { emptyPackageForm, packageFormToEditState } from './PackageForm.jsx';
 
 const emptyForm = { name: '', buyIn: '', totalPercent: '100', markup: '1', maxBullets: '1', roiEstimado: '', walletAddress: '', walletAddressEvm: '', deadline: '' };
 const inputCls = 'mt-1 w-full pk-bg pk-border border pk-ivory rounded-lg px-3 py-2 focus:outline-none';
 
 export default function AdminPanel({ onLogout }) {
   const [tournaments, setTournaments] = useState([]);
+  const [packages, setPackages] = useState([]);
   const [purchases, setPurchases] = useState([]);
   const [config, setConfig] = useState(null);
   const [toast, setToast] = useState('');
@@ -17,6 +19,10 @@ export default function AdminPanel({ onLogout }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
+
+  const [showPackageForm, setShowPackageForm] = useState(false);
+  const [packageForm, setPackageForm] = useState(emptyPackageForm);
+  const [editingPackageId, setEditingPackageId] = useState(null);
 
   useEffect(() => { loadAll(); }, []);
 
@@ -36,7 +42,7 @@ export default function AdminPanel({ onLogout }) {
         const fresh = await api.adminPurchases();
         const prevPending = new Set(purchases.filter((p) => p.status === 'pendiente').map((p) => p.id));
         const newlyConfirmed = fresh.find((p) => prevPending.has(p.id) && p.status === 'confirmado');
-        if (newlyConfirmed) setToast(`Pago confirmado: ${newlyConfirmed.buyerName} · ${newlyConfirmed.tournamentName}`);
+        if (newlyConfirmed) setToast(`Pago confirmado: ${newlyConfirmed.buyerName} · ${newlyConfirmed.productName}`);
         setPurchases(fresh);
       } catch { /* red caída momentáneamente, se reintenta en el próximo tick */ }
     }, 20000);
@@ -45,8 +51,9 @@ export default function AdminPanel({ onLogout }) {
   }, [purchases]);
 
   async function loadAll() {
-    const [t, p, c] = await Promise.all([api.adminTournaments(), api.adminPurchases(), api.adminSiteConfig()]);
+    const [t, pkgs, p, c] = await Promise.all([api.adminTournaments(), api.adminPackages(), api.adminPurchases(), api.adminSiteConfig()]);
     setTournaments(t);
+    setPackages(pkgs);
     setPurchases(p);
     setConfig(c);
   }
@@ -126,6 +133,69 @@ export default function AdminPanel({ onLogout }) {
     setPurchases((prev) => prev.filter((x) => x.tournamentId !== t.id));
   }
 
+  function openNewPackageForm() {
+    if (showPackageForm && !editingPackageId) { setShowPackageForm(false); return; }
+    setPackageForm(emptyPackageForm);
+    setEditingPackageId(null);
+    setShowPackageForm(true);
+  }
+
+  function startEditPackage(pkg) {
+    setPackageForm(packageFormToEditState(pkg));
+    setEditingPackageId(pkg.id);
+    setShowPackageForm(true);
+  }
+
+  function cancelPackageForm() {
+    setPackageForm(emptyPackageForm);
+    setEditingPackageId(null);
+    setShowPackageForm(false);
+  }
+
+  async function handleSubmitPackageForm() {
+    if (!packageForm.name || !packageForm.walletAddress) {
+      setToast('Completá nombre y wallet del paquete');
+      return;
+    }
+    if (packageForm.legs.length === 0 || packageForm.legs.some((l) => !l.name || !l.buyIn)) {
+      setToast('Cada torneo del paquete necesita nombre y buy-in');
+      return;
+    }
+    try {
+      if (editingPackageId) {
+        const updated = await api.adminUpdatePackage(editingPackageId, packageForm);
+        setPackages((prev) => prev.map((x) => (x.id === editingPackageId ? updated : x)));
+        setToast('Cambios guardados ✓');
+      } else {
+        const created = await api.adminCreatePackage(packageForm);
+        setPackages((prev) => [created, ...prev]);
+        setToast('Paquete publicado ✓');
+      }
+      setPackageForm(emptyPackageForm);
+      setEditingPackageId(null);
+      setShowPackageForm(false);
+    } catch (e) {
+      setToast(e.message);
+    }
+  }
+
+  async function togglePackageClose(pkg) {
+    const updated = await api.adminTogglePackageClose(pkg.id);
+    setPackages((prev) => prev.map((x) => (x.id === pkg.id ? updated : x)));
+  }
+
+  async function updatePackageLiveStatus(pkg, liveStatus, liveNote) {
+    const updated = await api.adminUpdatePackageLiveStatus(pkg.id, { liveStatus, liveNote });
+    setPackages((prev) => prev.map((x) => (x.id === pkg.id ? updated : x)));
+  }
+
+  async function deletePackage(pkg) {
+    if (!window.confirm(`¿Borrar el paquete "${pkg.name}" y todas sus compras? No se puede deshacer.`)) return;
+    await api.adminDeletePackage(pkg.id);
+    setPackages((prev) => prev.filter((x) => x.id !== pkg.id));
+    setPurchases((prev) => prev.filter((x) => x.productId !== pkg.id));
+  }
+
   async function setPurchaseStatus(p, status) {
     const updated = await api.adminSetPurchaseStatus(p.id, status);
     setPurchases((prev) => prev.map((x) => (x.id === p.id ? updated : x)));
@@ -170,6 +240,7 @@ export default function AdminPanel({ onLogout }) {
         <h2 className="pk-display text-2xl font-semibold flex items-center gap-2"><Settings size={20} /> Panel del organizador</h2>
         <div className="flex items-center gap-3">
           <button type="button" onClick={onLogout} className="text-xs pk-ivory-dim hover:opacity-80 flex items-center gap-1"><LogOut size={14} /> Cerrar sesión</button>
+          <button type="button" onClick={openNewPackageForm} className="pk-surface2 pk-ivory pk-border border font-medium rounded-xl px-4 py-2 flex items-center gap-1 hover:opacity-80"><PackagePlus size={16} /> Nuevo paquete</button>
           <button type="button" onClick={openNewForm} className="pk-bg-gold pk-onGold font-medium rounded-xl px-4 py-2 flex items-center gap-1 hover:opacity-90"><Plus size={16} /> Nuevo torneo</button>
         </div>
       </div>
@@ -287,6 +358,56 @@ export default function AdminPanel({ onLogout }) {
         </div>
       </div>
 
+      {showPackageForm && (
+        <PackageForm
+          form={packageForm}
+          onChange={setPackageForm}
+          editing={!!editingPackageId}
+          onSubmit={handleSubmitPackageForm}
+          onCancel={cancelPackageForm}
+        />
+      )}
+
+      <div>
+        <h3 className="pk-display font-semibold mb-3">Tus paquetes</h3>
+        <div className="flex flex-col gap-2">
+          {packages.map((pkg) => (
+            <div key={pkg.id} className="pk-surface pk-border border rounded-xl p-4 flex flex-col gap-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <p className="font-medium">{pkg.name} <span className={`text-xs ml-2 px-2 py-0.5 rounded-full ${pkg.status === 'activo' ? 'pk-bg-gold-soft pk-gold' : 'pk-surface2 pk-ivory-dim'}`}>{pkg.status}</span></p>
+                  <p className="text-xs pk-ivory-dim pk-mono">{pkg.availablePercent.toFixed(2)}% disponible de {pkg.totalPercent}% · {pkg.legs.length} torneo{pkg.legs.length !== 1 ? 's' : ''} · {fmtUSDT(pkg.pricePerPercentMicro)} USDT/1%</p>
+                  <p className="text-xs pk-ivory-dim opacity-80 mt-1">{pkg.legs.map((l) => l.name).join(' + ')}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={() => startEditPackage(pkg)} className="text-xs pk-gold hover:underline pk-border border rounded-lg px-3 py-1.5">Editar</button>
+                  <button type="button" onClick={() => togglePackageClose(pkg)} className="text-xs pk-ivory-dim hover:opacity-80 pk-border border rounded-lg px-3 py-1.5">{pkg.status === 'activo' ? 'Cerrar' : 'Reabrir'}</button>
+                  <button type="button" onClick={() => deletePackage(pkg)} className="text-xs pk-brick hover:underline pk-border border rounded-lg px-3 py-1.5">Borrar</button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap pk-border border-t pt-2.5">
+                <select value={pkg.liveStatus || 'registro'} onChange={(e) => updatePackageLiveStatus(pkg, e.target.value, pkg.liveNote || '')} className="pk-bg pk-border border pk-ivory text-xs rounded-lg px-2 py-1 focus:outline-none">
+                  <option value="registro">Late Registration</option>
+                  <option value="jugando">Jugando</option>
+                  <option value="mesa_final">Mesa Final</option>
+                  <option value="finalizado">Finalizado</option>
+                  <option value="cancelado">Cancelado</option>
+                </select>
+                <input
+                  defaultValue={pkg.liveNote || ''}
+                  onBlur={(e) => e.target.value !== (pkg.liveNote || '') && updatePackageLiveStatus(pkg, pkg.liveStatus || 'registro', e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+                  placeholder="Nota rápida"
+                  className="flex-1 pk-bg pk-border border pk-ivory text-xs rounded-lg px-2 py-1 focus:outline-none"
+                  style={{ minWidth: 160 }}
+                />
+              </div>
+            </div>
+          ))}
+          {packages.length === 0 && <p className="pk-ivory-dim text-sm">Todavía no publicaste ningún paquete.</p>}
+        </div>
+      </div>
+
       <div>
         <h3 className="pk-display font-semibold mb-3">Compras</h3>
         <div className="flex flex-col gap-2">
@@ -294,8 +415,11 @@ export default function AdminPanel({ onLogout }) {
             <div key={p.id} className="pk-surface pk-border border rounded-xl p-4 flex flex-col gap-3">
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div className="min-w-0">
-                  <p className="font-medium truncate">{p.buyerName} · {p.tournamentName}</p>
+                  <p className="font-medium truncate">{p.buyerName} · {p.productName} {p.productType === 'package' && <span className="pk-mono text-[10px] pk-straw">PAQUETE</span>}</p>
                   <p className="text-xs pk-ivory-dim pk-mono">{p.percent}% · {fmtUSDT(p.uniqueAmountMicro)} USDT · {p.buyerContact} · código {p.code}</p>
+                  {p.productType === 'package' && p.legs && (
+                    <p className="text-xs pk-ivory-dim opacity-70 mt-0.5">Incluye: {p.legs.map((l) => l.name).join(' + ')}</p>
+                  )}
                   {p.originWallet && <p className="text-xs pk-ivory-dim opacity-70 truncate pk-mono">Origen: {p.originWallet}</p>}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">

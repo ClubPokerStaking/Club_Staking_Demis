@@ -8,9 +8,16 @@ import { loadOrganizerPublic } from '../middleware/loadOrganizerPublic.js';
 import { buyerGateFor } from '../middleware/buyerGate.js';
 import { availablePercent, genAmountSuffix, genCode } from '../services/amounts.js';
 import { verifyPurchase, NETWORKS } from '../services/chainVerify.js';
+import { packagePricePerPercentMicro, packageBuyInMicro, packageMaxPossibleMicro, serializeLeg } from '../services/packages.js';
 import { HttpError, asyncRoute } from '../httpError.js';
 
 export const publicRoutes = Router();
+
+// Neon (Postgres gratis) puede tardar varios segundos en "despertar" si
+// estuvo inactivo, y cada ida y vuelta de la transacción de compra suma
+// latencia de red — el timeout de 5s por defecto de Prisma no siempre
+// alcanza. Le damos más margen solo a las transacciones de compra.
+const TX_OPTIONS = { timeout: 15000, maxWait: 10000 };
 
 const purchaseLimiter = rateLimit({ windowMs: 10 * 60 * 1000, limit: 20, standardHeaders: true, legacyHeaders: false });
 const unlockLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 20, standardHeaders: true, legacyHeaders: false });
@@ -31,19 +38,44 @@ function serializeTournamentPublic(t, purchases) {
     deadline: t.deadline,
     liveStatus: t.liveStatus,
     liveNote: t.liveNote,
+    createdAt: t.createdAt,
     availablePercent: availablePercent(t, purchases),
+  };
+}
+
+function serializePackagePublic(pkg, purchases) {
+  return {
+    id: pkg.id,
+    name: pkg.name,
+    totalPercent: pkg.totalPercent,
+    hasEvm: !!pkg.walletAddressEvm,
+    deadline: pkg.deadline,
+    liveStatus: pkg.liveStatus,
+    liveNote: pkg.liveNote,
+    createdAt: pkg.createdAt,
+    legs: pkg.legs.map(serializeLeg),
+    buyInMicro: packageBuyInMicro(pkg.legs),
+    pricePerPercentMicro: packagePricePerPercentMicro(pkg.legs),
+    maxPossibleMicro: packageMaxPossibleMicro(pkg.legs),
+    availablePercent: availablePercent(pkg, purchases),
   };
 }
 
 // Solo los campos que el propio comprador necesita ver de su compra.
 function serializePurchaseOwner(p) {
+  const productType = p.packageId ? 'package' : 'tournament';
+  const product = productType === 'package' ? p.package : p.tournament;
   return {
     id: p.id,
     code: p.code,
+    productType,
+    productId: product?.id,
+    productName: product?.name,
     tournamentId: p.tournamentId,
-    tournamentName: p.tournament?.name,
-    liveStatus: p.tournament?.liveStatus,
-    liveNote: p.tournament?.liveNote,
+    tournamentName: productType === 'tournament' ? product?.name : undefined,
+    legs: productType === 'package' && product?.legs ? product.legs.map(serializeLeg) : undefined,
+    liveStatus: product?.liveStatus,
+    liveNote: product?.liveNote,
     percent: p.percent,
     baseAmountMicro: p.baseAmountMicro,
     uniqueAmountMicro: p.uniqueAmountMicro,
@@ -134,13 +166,78 @@ publicRoutes.post('/:slug/tournaments/:id/purchase', purchaseLimiter, loadOrgani
     }
     if (!created) throw new HttpError(500, 'No se pudo generar un monto único, probá de nuevo');
     return created;
+  }, TX_OPTIONS);
+
+  res.status(201).json(serializePurchaseOwner(purchase));
+}));
+
+publicRoutes.get('/:slug/packages', loadOrganizerPublic, (req, res, next) => buyerGateFor(req.params.slug)(req, res, next), asyncRoute(async (req, res) => {
+  const packages = await prisma.package.findMany({
+    where: { organizerId: req.organizerId, status: 'activo' },
+    orderBy: { createdAt: 'desc' },
+    include: { legs: true, purchases: true },
   });
+  res.json(packages.map((p) => serializePackagePublic(p, p.purchases)));
+}));
+
+publicRoutes.post('/:slug/packages/:id/purchase', purchaseLimiter, loadOrganizerPublic, (req, res, next) => buyerGateFor(req.params.slug)(req, res, next), asyncRoute(async (req, res) => {
+  const { percent, buyerName, buyerContact, originWallet, network } = req.body || {};
+  const p = Number(percent);
+  const name = String(buyerName || '').trim().slice(0, 120);
+  const contact = String(buyerContact || '').trim().slice(0, 200);
+  const origin = String(originWallet || '').trim().slice(0, 120);
+  const net = ['trc20', 'eth', 'polygon'].includes(network) ? network : 'trc20';
+
+  if (!Number.isFinite(p) || p <= 0) throw new HttpError(400, 'Porcentaje inválido');
+  if (!name || !contact) throw new HttpError(400, 'Completá tu nombre y un contacto');
+
+  const purchase = await prisma.$transaction(async (tx) => {
+    const lockCheck = await tx.package.updateMany({
+      where: { id: req.params.id, organizerId: req.organizerId, status: 'activo' },
+      data: { version: { increment: 1 } },
+    });
+    if (lockCheck.count === 0) throw new HttpError(404, 'Paquete no encontrado');
+    const pkg = await tx.package.findFirst({ where: { id: req.params.id, organizerId: req.organizerId, status: 'activo' }, include: { legs: true } });
+    if (!pkg) throw new HttpError(404, 'Paquete no encontrado');
+    if (net !== 'trc20' && !pkg.walletAddressEvm) throw new HttpError(400, 'Este paquete no acepta esa red');
+
+    const purchases = await tx.purchase.findMany({ where: { packageId: pkg.id } });
+    const avail = availablePercent(pkg, purchases);
+    if (p > avail + 0.001) throw new HttpError(409, `Solo quedan ${avail.toFixed(2)}% disponibles`);
+
+    const receivingAddress = net === 'trc20' ? pkg.walletAddress : pkg.walletAddressEvm;
+    const baseAmountMicro = Math.round(p * packagePricePerPercentMicro(pkg.legs));
+
+    let created = null;
+    for (let tries = 0; tries < 40 && !created; tries++) {
+      const uniqueAmountMicro = baseAmountMicro + genAmountSuffix();
+      const clash = await tx.purchase.findFirst({ where: { packageId: pkg.id, network: net, uniqueAmountMicro } });
+      if (clash) continue;
+      created = await tx.purchase.create({
+        data: {
+          packageId: pkg.id,
+          code: genCode(),
+          buyerName: name,
+          buyerContact: contact,
+          originWallet: origin,
+          percent: p,
+          baseAmountMicro,
+          uniqueAmountMicro,
+          network: net,
+          walletAddress: receivingAddress,
+        },
+        include: { package: { include: { legs: true } } },
+      });
+    }
+    if (!created) throw new HttpError(500, 'No se pudo generar un monto único, probá de nuevo');
+    return created;
+  }, TX_OPTIONS);
 
   res.status(201).json(serializePurchaseOwner(purchase));
 }));
 
 async function findOwnedPurchase(id, code) {
-  const purchase = await prisma.purchase.findUnique({ where: { id }, include: { tournament: true } });
+  const purchase = await prisma.purchase.findUnique({ where: { id }, include: { tournament: true, package: { include: { legs: true } } } });
   // El código actúa como credencial de posesión: sin el código correcto,
   // nadie puede leer ni el estado ni el chat de una compra ajena.
   if (!purchase || purchase.code !== String(code || '').toUpperCase()) {
@@ -151,7 +248,7 @@ async function findOwnedPurchase(id, code) {
 
 publicRoutes.get('/purchases/by-code/:code', asyncRoute(async (req, res) => {
   const code = String(req.params.code || '').trim().toUpperCase();
-  const purchase = await prisma.purchase.findUnique({ where: { code }, include: { tournament: true } });
+  const purchase = await prisma.purchase.findUnique({ where: { code }, include: { tournament: true, package: { include: { legs: true } } } });
   if (!purchase) return res.json(null);
   res.json(serializePurchaseOwner(purchase));
 }));
@@ -160,11 +257,12 @@ publicRoutes.post('/purchases/:id/verify', verifyLimiter, asyncRoute(async (req,
   const purchase = await findOwnedPurchase(req.params.id, req.body?.code);
   if (purchase.status !== 'pendiente') return res.json(serializePurchaseOwner(purchase));
 
-  const organizer = await prisma.organizer.findUnique({ where: { id: purchase.tournament.organizerId } });
+  const organizerId = purchase.packageId ? purchase.package.organizerId : purchase.tournament.organizerId;
+  const organizer = await prisma.organizer.findUnique({ where: { id: organizerId } });
   const updated = await verifyPurchase(purchase, organizer?.etherscanKey).catch((err) => {
     throw new HttpError(502, err.message || 'No se pudo verificar');
   });
-  const fresh = updated ? { ...updated, tournament: purchase.tournament } : purchase;
+  const fresh = updated ? { ...updated, tournament: purchase.tournament, package: purchase.package } : purchase;
   res.json({ ...serializePurchaseOwner(fresh), verified: !!updated });
 }));
 

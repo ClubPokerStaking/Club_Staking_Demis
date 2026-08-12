@@ -4,6 +4,7 @@ import { requireOrganizerAuth } from '../middleware/requireOrganizerAuth.js';
 import { hashPassword } from '../auth/password.js';
 import { availablePercent } from '../services/amounts.js';
 import { verifyPurchase, testEtherscanKey } from '../services/chainVerify.js';
+import { packagePricePerPercentMicro, packageBuyInMicro, packageMaxPossibleMicro, serializeLeg } from '../services/packages.js';
 import { HttpError, asyncRoute } from '../httpError.js';
 
 export const adminRoutes = Router();
@@ -115,12 +116,149 @@ adminRoutes.delete('/tournaments/:id', asyncRoute(async (req, res) => {
   res.json({ ok: true });
 }));
 
+// --- Paquetes ---
+function serializePackageAdmin(pkg, purchases) {
+  return {
+    id: pkg.id,
+    name: pkg.name,
+    totalPercent: pkg.totalPercent,
+    walletAddress: pkg.walletAddress,
+    walletAddressEvm: pkg.walletAddressEvm,
+    deadline: pkg.deadline,
+    status: pkg.status,
+    liveStatus: pkg.liveStatus,
+    liveNote: pkg.liveNote,
+    createdAt: pkg.createdAt,
+    legs: pkg.legs.map(serializeLeg),
+    buyInMicro: packageBuyInMicro(pkg.legs),
+    pricePerPercentMicro: packagePricePerPercentMicro(pkg.legs),
+    maxPossibleMicro: packageMaxPossibleMicro(pkg.legs),
+    availablePercent: availablePercent(pkg, purchases),
+  };
+}
+
+async function loadOwnPackage(organizerId, id) {
+  const pkg = await prisma.package.findFirst({ where: { id, organizerId }, include: { legs: true } });
+  if (!pkg) throw new HttpError(404, 'Paquete no encontrado');
+  return pkg;
+}
+
+function parsePackageInput(body) {
+  const name = String(body.name || '').trim().slice(0, 200);
+  const walletAddress = String(body.walletAddress || '').trim();
+  if (!name) throw new HttpError(400, 'Falta el nombre del paquete');
+  if (!walletAddress) throw new HttpError(400, 'Falta la wallet de recepción');
+  const totalPercent = Number(body.totalPercent) || 100;
+  if (totalPercent <= 0 || totalPercent > 1000) throw new HttpError(400, '% total inválido');
+
+  const rawLegs = Array.isArray(body.legs) ? body.legs : [];
+  if (rawLegs.length === 0) throw new HttpError(400, 'Agregá al menos un torneo al paquete');
+  const legs = rawLegs.map((leg, i) => {
+    const legName = String(leg.name || '').trim().slice(0, 200);
+    const buyIn = Number(leg.buyIn) || 0;
+    const markup = Number(leg.markup) || 1;
+    if (!legName) throw new HttpError(400, `Falta el nombre del torneo #${i + 1} del paquete`);
+    if (buyIn <= 0) throw new HttpError(400, `Buy-in inválido en "${legName}"`);
+    if (markup <= 0) throw new HttpError(400, `Markup inválido en "${legName}"`);
+    return {
+      name: legName,
+      buyInMicro: Math.round(buyIn * 1_000_000),
+      markup,
+      roiEstimado: leg.roiEstimado !== '' && leg.roiEstimado != null ? Number(leg.roiEstimado) : null,
+      maxBullets: Math.max(1, Number(leg.maxBullets) || 1),
+      sortOrder: i,
+    };
+  });
+
+  return {
+    name,
+    totalPercent,
+    walletAddress,
+    walletAddressEvm: String(body.walletAddressEvm || '').trim() || null,
+    deadline: String(body.deadline || '').trim() || null,
+    legs,
+  };
+}
+
+adminRoutes.get('/packages', asyncRoute(async (req, res) => {
+  const packages = await prisma.package.findMany({
+    where: { organizerId: req.organizer.id },
+    orderBy: { createdAt: 'desc' },
+    include: { legs: true, purchases: true },
+  });
+  res.json(packages.map((p) => serializePackageAdmin(p, p.purchases)));
+}));
+
+adminRoutes.post('/packages', asyncRoute(async (req, res) => {
+  const { legs, ...data } = parsePackageInput(req.body || {});
+  const pkg = await prisma.package.create({
+    data: { ...data, organizerId: req.organizer.id, legs: { create: legs } },
+    include: { legs: true },
+  });
+  res.status(201).json(serializePackageAdmin(pkg, []));
+}));
+
+adminRoutes.put('/packages/:id', asyncRoute(async (req, res) => {
+  await loadOwnPackage(req.organizer.id, req.params.id);
+  const { legs, ...data } = parsePackageInput(req.body || {});
+  // Reemplazamos los torneos del paquete enteros en vez de tratar de
+  // "diffear" cuáles cambiaron — es una edición poco frecuente y así no
+  // hay riesgo de arrastrar legs viejos huérfanos.
+  const pkg = await prisma.$transaction(async (tx) => {
+    await tx.packageLeg.deleteMany({ where: { packageId: req.params.id } });
+    return tx.package.update({
+      where: { id: req.params.id },
+      data: { ...data, legs: { create: legs } },
+      include: { legs: true },
+    });
+  });
+  const purchases = await prisma.purchase.findMany({ where: { packageId: pkg.id } });
+  res.json(serializePackageAdmin(pkg, purchases));
+}));
+
+adminRoutes.post('/packages/:id/toggle-close', asyncRoute(async (req, res) => {
+  const existing = await loadOwnPackage(req.organizer.id, req.params.id);
+  const pkg = await prisma.package.update({
+    where: { id: existing.id },
+    data: { status: existing.status === 'activo' ? 'cerrado' : 'activo' },
+    include: { legs: true },
+  });
+  const purchases = await prisma.purchase.findMany({ where: { packageId: pkg.id } });
+  res.json(serializePackageAdmin(pkg, purchases));
+}));
+
+adminRoutes.put('/packages/:id/live-status', asyncRoute(async (req, res) => {
+  const existing = await loadOwnPackage(req.organizer.id, req.params.id);
+  const liveStatus = String(req.body?.liveStatus || 'registro');
+  const liveNote = String(req.body?.liveNote || '').slice(0, 300);
+  const pkg = await prisma.package.update({
+    where: { id: existing.id },
+    data: { liveStatus, liveNote, liveUpdatedAt: new Date() },
+    include: { legs: true },
+  });
+  const purchases = await prisma.purchase.findMany({ where: { packageId: pkg.id } });
+  res.json(serializePackageAdmin(pkg, purchases));
+}));
+
+adminRoutes.delete('/packages/:id', asyncRoute(async (req, res) => {
+  await loadOwnPackage(req.organizer.id, req.params.id);
+  await prisma.package.delete({ where: { id: req.params.id } });
+  res.json({ ok: true });
+}));
+
+// --- Compras (de torneos o de paquetes) ---
 function serializePurchaseAdmin(p) {
+  const productType = p.packageId ? 'package' : 'tournament';
+  const product = productType === 'package' ? p.package : p.tournament;
   return {
     id: p.id,
     code: p.code,
+    productType,
+    productId: product?.id,
+    productName: product?.name,
     tournamentId: p.tournamentId,
-    tournamentName: p.tournament?.name,
+    tournamentName: productType === 'tournament' ? product?.name : undefined,
+    legs: productType === 'package' && product?.legs ? product.legs.map(serializeLeg) : undefined,
     buyerName: p.buyerName,
     buyerContact: p.buyerContact,
     originWallet: p.originWallet,
@@ -138,15 +276,18 @@ function serializePurchaseAdmin(p) {
 
 adminRoutes.get('/purchases', asyncRoute(async (req, res) => {
   const purchases = await prisma.purchase.findMany({
-    where: { tournament: { organizerId: req.organizer.id } },
-    include: { tournament: true },
+    where: { OR: [{ tournament: { organizerId: req.organizer.id } }, { package: { organizerId: req.organizer.id } }] },
+    include: { tournament: true, package: { include: { legs: true } } },
     orderBy: { createdAt: 'desc' },
   });
   res.json(purchases.map(serializePurchaseAdmin));
 }));
 
 async function loadOwnPurchase(organizerId, id) {
-  const p = await prisma.purchase.findFirst({ where: { id, tournament: { organizerId } }, include: { tournament: true } });
+  const p = await prisma.purchase.findFirst({
+    where: { id, OR: [{ tournament: { organizerId } }, { package: { organizerId } }] },
+    include: { tournament: true, package: { include: { legs: true } } },
+  });
   if (!p) throw new HttpError(404, 'Compra no encontrada');
   return p;
 }
@@ -156,7 +297,7 @@ adminRoutes.put('/purchases/:id/status', asyncRoute(async (req, res) => {
   const status = String(req.body?.status || '');
   if (!['pendiente', 'confirmado', 'rechazado'].includes(status)) throw new HttpError(400, 'Estado inválido');
   const p = await prisma.purchase.update({ where: { id: existing.id }, data: { status } });
-  res.json(serializePurchaseAdmin({ ...p, tournament: existing.tournament }));
+  res.json(serializePurchaseAdmin({ ...p, tournament: existing.tournament, package: existing.package }));
 }));
 
 adminRoutes.post('/purchases/:id/verify', asyncRoute(async (req, res) => {
@@ -165,7 +306,7 @@ adminRoutes.post('/purchases/:id/verify', asyncRoute(async (req, res) => {
   const updated = await verifyPurchase(existing, req.organizer.etherscanKey).catch((err) => {
     throw new HttpError(502, err.message || 'No se pudo verificar');
   });
-  const fresh = updated ? { ...updated, tournament: existing.tournament } : existing;
+  const fresh = updated ? { ...updated, tournament: existing.tournament, package: existing.package } : existing;
   res.json({ ...serializePurchaseAdmin(fresh), verified: !!updated });
 }));
 
