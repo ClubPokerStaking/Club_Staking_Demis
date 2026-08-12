@@ -181,10 +181,13 @@ export default function BuyerSite() {
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
                             <h3 className="pk-display font-semibold text-lg leading-snug">{item.name}</h3>
-                            {isPackage && <span className="text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap pk-bg-straw-soft pk-straw">PAQUETE</span>}
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${live.cls}`}>{live.label}</span>
+                            {isPackage && <span className="pk-tag-big text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap pk-bg-straw-soft pk-straw">PAQUETE</span>}
                           </div>
-                          {item.buyInMicro > 0 && <p className="pk-ivory-dim text-sm pk-mono">Buy-in {fmtUSDT(item.buyInMicro)} USDT{isPackage ? ` (${item.legs.length} torneos)` : ''}</p>}
+                          <div className="flex items-center gap-2 flex-wrap mt-1">
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${live.cls}`}>{live.label}</span>
+                            {isPackage && item.currentLegName && <span className="pk-ivory-dim text-xs">— jugando ahora: <b className="pk-ivory">{item.currentLegName}</b></span>}
+                          </div>
+                          {item.buyInMicro > 0 && <p className="pk-ivory-dim text-sm pk-mono mt-1">Buy-in {fmtUSDT(item.buyInMicro)} USDT{isPackage ? ` (${item.legs.length} torneos)` : ''}</p>}
                           {item.liveNote && <p className="pk-ivory-dim text-xs mt-0.5">{item.liveNote}</p>}
                         </div>
                         <span className="pk-bg-gold-soft pk-gold pk-border-gold border pk-mono text-xs px-2 py-1 rounded-full whitespace-nowrap">
@@ -192,7 +195,7 @@ export default function BuyerSite() {
                         </span>
                       </div>
                       {isPackage && item.avgEdgePercent != null && (
-                        <EdgeBadge edgePercent={item.avgEdgePercent} variant="hero" label="Ventaja para vos" />
+                        <EdgeBadge edgePercent={item.avgEdgePercent} variant="hero" label="Ventaja para vos" fullWidth />
                       )}
                       <div className="flex items-center gap-3 pk-detail-text pk-ivory-dim pk-mono flex-wrap">
                         {item.markup != null && <span>Markup {Number(item.markup).toFixed(2)}x</span>}
@@ -284,6 +287,9 @@ export default function BuyerSite() {
                     })()}
                   </div>
                   <p className="pk-ivory-dim text-sm pk-mono">{lookupResult.percent}% · {fmtUSDT(lookupResult.uniqueAmountMicro)} USDT</p>
+                  {lookupResult.productType === 'package' && lookupResult.currentLegName && (
+                    <p className="pk-ivory-dim text-xs mt-0.5">Jugando ahora: <b className="pk-ivory">{lookupResult.currentLegName}</b></p>
+                  )}
                   {lookupResult.productType === 'package' && lookupResult.legs && (
                     <div className="pk-bg pk-border border rounded-xl p-3 mt-2 flex flex-col gap-2">
                       {lookupResult.legs.map((l) => (

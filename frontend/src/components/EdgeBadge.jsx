@@ -4,15 +4,17 @@
 //
 // variant="hero" es el tratamiento destacado (color propio + tipografía
 // distinta) para el número que más importa mostrar: la ventaja neta del
-// paquete completo. variant="inline" es la versión chica para cada
-// torneo individual dentro del desglose.
-export default function EdgeBadge({ edgePercent, variant = 'inline', label }) {
+// paquete completo. fullWidth lo convierte en un banner de ancho
+// completo en vez de una píldora — el tratamiento más notorio.
+// variant="inline" es la versión chica para cada torneo dentro del desglose.
+export default function EdgeBadge({ edgePercent, variant = 'inline', label, fullWidth = false }) {
   if (edgePercent == null) return null;
   const positive = edgePercent >= 0;
 
   if (variant === 'hero') {
+    const heroCls = ['pk-edge-hero', fullWidth ? 'pk-edge-hero-full' : '', positive ? '' : 'pk-edge-hero-negative'].filter(Boolean).join(' ');
     return (
-      <span className={`pk-edge-hero ${positive ? '' : 'pk-edge-hero-negative'}`}>
+      <span className={heroCls}>
         <span className={`pk-edge-hero-label ${positive ? 'pk-jade' : 'pk-brick'}`}>{label || 'Ventaja del comprador'}</span>
         <span className={`pk-edge-hero-value ${positive ? 'pk-jade' : 'pk-brick'}`}>{positive ? '+' : ''}{edgePercent}%</span>
       </span>

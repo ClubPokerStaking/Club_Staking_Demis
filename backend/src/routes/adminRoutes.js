@@ -129,6 +129,7 @@ function serializePackageAdmin(pkg, purchases) {
     status: pkg.status,
     liveStatus: pkg.liveStatus,
     liveNote: pkg.liveNote,
+    currentLegName: pkg.currentLegName,
     createdAt: pkg.createdAt,
     legs: pkg.legs.map(serializeLeg),
     buyInMicro: packageBuyInMicro(pkg.legs),
@@ -235,9 +236,13 @@ adminRoutes.put('/packages/:id/live-status', asyncRoute(async (req, res) => {
   const existing = await loadOwnPackage(req.organizer.id, req.params.id);
   const liveStatus = String(req.body?.liveStatus || 'registro');
   const liveNote = String(req.body?.liveNote || '').slice(0, 300);
+  const rawLegName = typeof req.body?.currentLegName === 'string' ? req.body.currentLegName.trim() : '';
+  // Solo aceptamos el nombre de un torneo que realmente esté en el
+  // paquete, para que no quede un valor huérfano escrito a mano.
+  const currentLegName = rawLegName && existing.legs.some((l) => l.name === rawLegName) ? rawLegName : null;
   const pkg = await prisma.package.update({
     where: { id: existing.id },
-    data: { liveStatus, liveNote, liveUpdatedAt: new Date() },
+    data: { liveStatus, liveNote, currentLegName, liveUpdatedAt: new Date() },
     include: { legs: true },
   });
   const purchases = await prisma.purchase.findMany({ where: { packageId: pkg.id } });

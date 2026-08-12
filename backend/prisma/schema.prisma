@@ -79,6 +79,10 @@ model Package {
   status           String @default("activo")
   liveStatus       String @default("registro")
   liveNote         String @default("")
+  // Nombre (no id, para no romperse si se edita el paquete y se
+  // reemplazan los torneos incluidos) del torneo del paquete que se está
+  // jugando en este momento — se muestra junto al estado en vivo.
+  currentLegName   String?
   liveUpdatedAt    DateTime @default(now())
   createdAt        DateTime @default(now())
   version          Int      @default(0)

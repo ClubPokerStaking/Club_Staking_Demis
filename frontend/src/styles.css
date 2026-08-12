@@ -60,6 +60,29 @@ body { margin: 0; }
 @media (min-width: 640px) {
   .pk-edge-hero-value { font-size: 1.35rem; }
 }
+
+/* Variante "banner": la ventaja ocupa todo el ancho de la tarjeta en vez
+   de una píldora — es el tratamiento más notorio de los dos. */
+.pk-edge-hero-full {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border-radius: 14px;
+  padding: 14px 18px;
+}
+.pk-edge-hero-full .pk-edge-hero-label { font-size: 0.72rem; }
+.pk-edge-hero-full .pk-edge-hero-value { font-size: 1.5rem; }
+@media (min-width: 640px) {
+  .pk-edge-hero-full .pk-edge-hero-value { font-size: 1.7rem; }
+}
+
+/* El tag "PAQUETE" en su versión grande, al peso visual del título. */
+.pk-tag-big {
+  font-size: 0.85rem !important;
+  padding: 5px 13px !important;
+  font-weight: 700;
+}
 .pk-ticket { position: relative; }
 .pk-notch { position: absolute; width: 18px; height: 18px; background: #0F1912; border-radius: 9999px; left: -9px; }
 .pk-notch-top { top: -9px; }

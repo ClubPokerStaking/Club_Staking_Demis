@@ -184,8 +184,12 @@ export default function AdminPanel({ onLogout }) {
     setPackages((prev) => prev.map((x) => (x.id === pkg.id ? updated : x)));
   }
 
-  async function updatePackageLiveStatus(pkg, liveStatus, liveNote) {
-    const updated = await api.adminUpdatePackageLiveStatus(pkg.id, { liveStatus, liveNote });
+  async function updatePackageLiveStatus(pkg, liveStatus, liveNote, currentLegName) {
+    const updated = await api.adminUpdatePackageLiveStatus(pkg.id, {
+      liveStatus,
+      liveNote,
+      currentLegName: currentLegName !== undefined ? currentLegName : (pkg.currentLegName || ''),
+    });
     setPackages((prev) => prev.map((x) => (x.id === pkg.id ? updated : x)));
   }
 
@@ -386,16 +390,24 @@ export default function AdminPanel({ onLogout }) {
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-wrap pk-border border-t pt-2.5">
-                <select value={pkg.liveStatus || 'registro'} onChange={(e) => updatePackageLiveStatus(pkg, e.target.value, pkg.liveNote || '')} className="pk-bg pk-border border pk-ivory text-xs rounded-lg px-2 py-1 focus:outline-none">
+                <select value={pkg.liveStatus || 'registro'} onChange={(e) => updatePackageLiveStatus(pkg, e.target.value, pkg.liveNote || '', pkg.currentLegName || '')} className="pk-bg pk-border border pk-ivory text-xs rounded-lg px-2 py-1 focus:outline-none">
                   <option value="registro">Late Registration</option>
                   <option value="jugando">Jugando</option>
                   <option value="mesa_final">Mesa Final</option>
                   <option value="finalizado">Finalizado</option>
                   <option value="cancelado">Cancelado</option>
                 </select>
+                <select
+                  value={pkg.currentLegName || ''}
+                  onChange={(e) => updatePackageLiveStatus(pkg, pkg.liveStatus || 'registro', pkg.liveNote || '', e.target.value)}
+                  className="pk-bg pk-border border pk-ivory text-xs rounded-lg px-2 py-1 focus:outline-none"
+                >
+                  <option value="">¿Jugando cuál torneo? (ninguno)</option>
+                  {pkg.legs.map((l) => <option key={l.id} value={l.name}>{l.name}</option>)}
+                </select>
                 <input
                   defaultValue={pkg.liveNote || ''}
-                  onBlur={(e) => e.target.value !== (pkg.liveNote || '') && updatePackageLiveStatus(pkg, pkg.liveStatus || 'registro', e.target.value)}
+                  onBlur={(e) => e.target.value !== (pkg.liveNote || '') && updatePackageLiveStatus(pkg, pkg.liveStatus || 'registro', e.target.value, pkg.currentLegName || '')}
                   onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
                   placeholder="Nota rápida"
                   className="flex-1 pk-bg pk-border border pk-ivory text-xs rounded-lg px-2 py-1 focus:outline-none"
