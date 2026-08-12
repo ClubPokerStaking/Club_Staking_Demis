@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
-import { fmtUSDT, NETWORKS } from '../format.js';
+import { fmtUSDT, fmtUSDT2, NETWORKS } from '../format.js';
 import EdgeBadge from './EdgeBadge.jsx';
 
 export default function BuyForm({ product, onSubmit }) {
@@ -40,7 +40,7 @@ export default function BuyForm({ product, onSubmit }) {
       <div>
         <h2 className="pk-display text-xl font-semibold">{product.name}</h2>
         <p className="pk-ivory-dim pk-detail-text pk-mono">
-          Disponible: {product.availablePercent.toFixed(2)}% · <span className="pk-gold font-bold" style={{ fontSize: '1.1em' }}>{fmtUSDT(product.pricePerPercentMicro)} USDT</span> por 1% (acción){product.markup != null ? ` (markup ${Number(product.markup).toFixed(2)}x)` : ''}
+          Disponible: {product.availablePercent.toFixed(2)}% · <span className="pk-gold font-bold" style={{ fontSize: '1.1em' }}>{fmtUSDT2(product.pricePerPercentMicro)} USDT</span> por 1% (acción){product.markup != null ? ` (markup ${Number(product.markup).toFixed(2)}x)` : ''}
         </p>
         {isPackage && product.totalValueMicro > 0 && (
           <p className="pk-ivory-dim pk-detail-text pk-mono mt-1">Valor total del paquete a la venta: {fmtUSDT(product.totalValueMicro)} USDT ({product.legs?.length} torneos)</p>

@@ -337,7 +337,7 @@ export default function AdminPanel({ onLogout }) {
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div>
                   <p className="font-medium">{t.name} <span className={`text-xs ml-2 px-2 py-0.5 rounded-full ${t.status === 'activo' ? 'pk-bg-gold-soft pk-gold' : 'pk-surface2 pk-ivory-dim'}`}>{t.status}</span></p>
-                  <p className="text-xs pk-ivory-dim pk-mono">{t.availablePercent.toFixed(2)}% disponible de {t.totalPercent}% · markup {Number(t.markup || 1).toFixed(2)}x{t.maxBullets > 1 ? ` · hasta ${t.maxBullets} balas` : ''}{t.roiEstimado != null ? ` · ROI est. ${t.roiEstimado}%` : ''}</p>
+                  <p className="text-xs pk-ivory-dim pk-mono">{t.availablePercent.toFixed(2)}% disponible{t.totalPercent !== 100 ? ` (vendés el ${t.totalPercent}% de tu acción real)` : ''} · markup {Number(t.markup || 1).toFixed(2)}x{t.maxBullets > 1 ? ` · hasta ${t.maxBullets} balas` : ''}{t.roiEstimado != null ? ` · ROI est. ${t.roiEstimado}%` : ''}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button type="button" onClick={() => startEdit(t)} className="text-xs pk-gold hover:underline pk-border border rounded-lg px-3 py-1.5">Editar</button>
@@ -386,7 +386,7 @@ export default function AdminPanel({ onLogout }) {
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div>
                   <p className="font-medium">{pkg.name} <span className={`text-xs ml-2 px-2 py-0.5 rounded-full ${pkg.status === 'activo' ? 'pk-bg-gold-soft pk-gold' : 'pk-surface2 pk-ivory-dim'}`}>{pkg.status}</span></p>
-                  <p className="text-xs pk-ivory-dim pk-mono">{pkg.availablePercent.toFixed(2)}% disponible de {pkg.totalPercent}% · {pkg.legs.length} torneo{pkg.legs.length !== 1 ? 's' : ''} · {fmtUSDT(pkg.pricePerPercentMicro)} USDT/1%</p>
+                  <p className="text-xs pk-ivory-dim pk-mono">{pkg.availablePercent.toFixed(2)}% disponible{pkg.totalPercent !== 100 ? ` (vendés el ${pkg.totalPercent}% de tu acción real)` : ''} · {pkg.legs.length} torneo{pkg.legs.length !== 1 ? 's' : ''} · {fmtUSDT(pkg.pricePerPercentMicro)} USDT/1%</p>
                   <p className="text-xs pk-ivory-dim opacity-80 mt-1">{pkg.legs.map((l) => l.name).join(' + ')}</p>
                 </div>
                 <div className="flex items-center gap-2">

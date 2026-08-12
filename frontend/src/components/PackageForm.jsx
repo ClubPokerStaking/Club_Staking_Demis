@@ -74,6 +74,11 @@ export default function PackageForm({ form, onChange, editing, onSubmit, onCance
   // Lo que le cuesta a un inversor quedarse con TODO lo puesto a la venta
   // (form.totalPercent puede ser menor a 100 si te quedás con una parte).
   const totalSaleValue = pricePerPercent * (Number(form.totalPercent) || 0);
+  // El comprador siempre compra sobre una escala 0-100 = "todo lo puesto a
+  // la venta" — no sobre la acción real del paquete — así que esto es lo
+  // que realmente paga por 1%, no pricePerPercent (que es sobre el 100%
+  // real del paquete).
+  const offeringPricePerPercent = totalSaleValue / 100;
   const legsWithRoi = form.legs.filter((l) => l.roiEstimado !== '' && l.roiEstimado != null);
   const avgRoi = legsWithRoi.length > 0
     ? legsWithRoi.reduce((sum, l) => sum + (Number(l.roiEstimado) || 0), 0) / legsWithRoi.length
@@ -130,7 +135,7 @@ export default function PackageForm({ form, onChange, editing, onSubmit, onCance
 
       {pricePerPercent > 0 && (
         <div className="pk-bg-gold-soft rounded-lg px-3 py-2 flex flex-col gap-1">
-          <p className="text-sm pk-gold pk-mono">Precio por 1% del paquete (automático, cubre todas las balas) → {pricePerPercent.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} USDT</p>
+          <p className="text-sm pk-gold pk-mono">Precio por 1% que paga el comprador (automático) → {offeringPricePerPercent.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} USDT</p>
           {totalSaleValue > 0 && (
             <p className="text-xs pk-gold pk-mono">Valor total a la venta ({form.totalPercent}%): {totalSaleValue.toLocaleString('es-AR', { minimumFractionDigits: 2 })} USDT — esto es lo máximo que puede gastar un inversor</p>
           )}

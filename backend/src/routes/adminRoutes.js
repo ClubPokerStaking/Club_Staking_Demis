@@ -4,7 +4,7 @@ import { requireOrganizerAuth } from '../middleware/requireOrganizerAuth.js';
 import { hashPassword } from '../auth/password.js';
 import { availablePercent } from '../services/amounts.js';
 import { verifyPurchase, testEtherscanKey } from '../services/chainVerify.js';
-import { packagePricePerPercentMicro, packageBuyInMicro, packageMaxPossibleMicro, packageAvgRoiPercent, packageAvgEdgePercent, packageAvgMarkup, serializeLeg } from '../services/packages.js';
+import { packageTotalValueMicro, packageBuyInMicro, packageMaxPossibleMicro, packageAvgRoiPercent, packageAvgEdgePercent, packageAvgMarkup, serializeLeg } from '../services/packages.js';
 import { HttpError, asyncRoute } from '../httpError.js';
 
 export const adminRoutes = Router();
@@ -42,9 +42,6 @@ function parseTournamentInput(body) {
   const buyIn = Number(body.buyIn) || 0;
   const buyInMicro = Math.round(buyIn * 1_000_000);
   const maxBullets = Math.max(1, Number(body.maxBullets) || 1);
-  // El precio por 1% cubre el costo de TODAS las balas posibles (se cobra
-  // por adelantado y se devuelve lo no jugado) — ver services/packages.js.
-  const pricePerPercentMicro = Math.round((buyInMicro * maxBullets * markup) / 100);
   const name = String(body.name || '').trim().slice(0, 200);
   const walletAddress = String(body.walletAddress || '').trim();
   if (!name) throw new HttpError(400, 'Falta el nombre del torneo');
@@ -52,6 +49,14 @@ function parseTournamentInput(body) {
   if (markup <= 0) throw new HttpError(400, 'El markup debe ser mayor a 0');
   const totalPercent = Number(body.totalPercent) || 100;
   if (totalPercent <= 0 || totalPercent > 1000) throw new HttpError(400, '% total inválido');
+
+  // El precio por 1% cubre el costo de TODAS las balas posibles (se cobra
+  // por adelantado y se devuelve lo no jugado). Además, el comprador
+  // siempre compra sobre una escala 0-100 = "todo lo puesto a la venta",
+  // no sobre la acción real del torneo — por eso se escala por
+  // totalPercent/100 (ver packageOfferingPricePerPercentMicro).
+  const realPricePerPercentMicro = Math.round((buyInMicro * maxBullets * markup) / 100);
+  const pricePerPercentMicro = Math.round((realPricePerPercentMicro * totalPercent) / 100);
 
   return {
     name,
@@ -121,7 +126,8 @@ adminRoutes.delete('/tournaments/:id', asyncRoute(async (req, res) => {
 
 // --- Paquetes ---
 function serializePackageAdmin(pkg, purchases) {
-  const pricePerPercentMicro = packagePricePerPercentMicro(pkg.legs);
+  const totalValueMicro = packageTotalValueMicro(pkg.legs, pkg.totalPercent);
+  const pricePerPercentMicro = Math.round(totalValueMicro / 100);
   return {
     id: pkg.id,
     name: pkg.name,
@@ -138,7 +144,7 @@ function serializePackageAdmin(pkg, purchases) {
     legs: pkg.legs.map(serializeLeg),
     buyInMicro: packageBuyInMicro(pkg.legs),
     pricePerPercentMicro,
-    totalValueMicro: pricePerPercentMicro * pkg.totalPercent,
+    totalValueMicro,
     maxPossibleMicro: packageMaxPossibleMicro(pkg.legs),
     avgRoiPercent: packageAvgRoiPercent(pkg.legs),
     avgMarkup: packageAvgMarkup(pkg.legs),

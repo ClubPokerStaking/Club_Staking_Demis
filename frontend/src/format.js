@@ -4,6 +4,13 @@ export function fmtUSDT(micro) {
   return (Number(micro) / MICRO).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 6 });
 }
 
+// Para montos "para humanos" (precios, no el monto exacto a pagar) —
+// siempre 2 decimales, sin la precisión extra que necesita el matching
+// on-chain.
+export function fmtUSDT2(micro) {
+  return (Number(micro) / MICRO).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 export const NETWORKS = {
   trc20: { label: 'USDT · TRC20 (Tron)', short: 'TRC20' },
   eth: { label: 'USDT · Ethereum (ERC20)', short: 'Ethereum' },

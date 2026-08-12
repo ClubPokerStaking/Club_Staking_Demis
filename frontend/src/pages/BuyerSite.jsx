@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Trophy, Search, Lock, RefreshCw, Loader2, Clock, ChevronDown, ChevronUp, Eye, EyeOff, UserCircle2 } from 'lucide-react';
 import { api } from '../api.js';
-import { fmtUSDT, LIVE_STATUS_MAP } from '../format.js';
+import { fmtUSDT, fmtUSDT2, LIVE_STATUS_MAP } from '../format.js';
 import BuyForm from '../components/BuyForm.jsx';
 import PaymentScreen from '../components/PaymentScreen.jsx';
 import ChatThread from '../components/ChatThread.jsx';
@@ -167,7 +167,7 @@ export default function BuyerSite() {
             ) : (
               <div className="grid sm:grid-cols-2 gap-5">
                 {items.map((item) => {
-                  const soldPct = item.totalPercent > 0 ? ((item.totalPercent - item.availablePercent) / item.totalPercent) * 100 : 0;
+                  const soldPct = 100 - item.availablePercent;
                   const live = LIVE_STATUS_MAP[item.liveStatus] || LIVE_STATUS_MAP.registro;
                   const isPackage = item.kind === 'package';
                   const expanded = expandedId === item.id;
@@ -203,7 +203,7 @@ export default function BuyerSite() {
                           {isPackage && <span className="pk-badge-flag">PAQUETE</span>}
                           {isPackage ? (
                             <div className="flex flex-col items-end" style={{ lineHeight: 1.15 }}>
-                              <span className="pk-gold pk-mono font-bold" style={{ fontSize: '1.2rem' }}>{fmtUSDT(item.pricePerPercentMicro)}</span>
+                              <span className="pk-gold pk-mono font-bold" style={{ fontSize: '1.2rem' }}>{fmtUSDT2(item.pricePerPercentMicro)}</span>
                               <span className="pk-ivory-dim text-[10px] whitespace-nowrap">USDT por 1% (acción)</span>
                             </div>
                           ) : (

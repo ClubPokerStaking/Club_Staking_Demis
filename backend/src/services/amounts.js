@@ -27,8 +27,11 @@ export function reservedPercent(purchases, now = Date.now()) {
     .reduce((s, p) => s + p.percent, 0);
 }
 
-export function availablePercent(tournament, purchases, now = Date.now()) {
-  return Math.max(0, tournament.totalPercent - reservedPercent(purchases, now));
+// El % que ve y compra el comprador es siempre sobre lo puesto a la venta
+// (0-100), no sobre la acción real del torneo/paquete — totalPercent solo
+// indica cuánto de la acción real se vende y no participa en esta escala.
+export function availablePercent(product, purchases, now = Date.now()) {
+  return Math.max(0, 100 - reservedPercent(purchases, now));
 }
 
 export function genCode() {

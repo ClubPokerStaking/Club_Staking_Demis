@@ -9,8 +9,22 @@ export function legPricePerPercentMicro(leg) {
   return Math.round((leg.buyInMicro * leg.maxBullets * leg.markup) / 100);
 }
 
+// Precio por 1% de la acción REAL del paquete (0-100 = el torneo/paquete
+// entero) — es un bloque interno de cálculo, no lo que paga el comprador.
 export function packagePricePerPercentMicro(legs) {
   return legs.reduce((sum, leg) => sum + legPricePerPercentMicro(leg), 0);
+}
+
+// Lo que cuesta comprar TODO lo puesto a la venta (totalPercent% de la
+// acción real, con el markup ya aplicado).
+export function packageTotalValueMicro(legs, totalPercent) {
+  return packagePricePerPercentMicro(legs) * totalPercent;
+}
+
+// Esto es lo que paga y ve el comprador: precio por 1% de LO PUESTO A LA
+// VENTA (0-100 = el 100% de la oferta, no el 100% del torneo real).
+export function packageOfferingPricePerPercentMicro(legs, totalPercent) {
+  return Math.round(packageTotalValueMicro(legs, totalPercent) / 100);
 }
 
 export function packageBuyInMicro(legs) {

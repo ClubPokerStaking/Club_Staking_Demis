@@ -8,7 +8,7 @@ import { loadOrganizerPublic } from '../middleware/loadOrganizerPublic.js';
 import { buyerGateFor } from '../middleware/buyerGate.js';
 import { availablePercent, genAmountSuffix, genCode } from '../services/amounts.js';
 import { verifyPurchase, NETWORKS } from '../services/chainVerify.js';
-import { packagePricePerPercentMicro, packageBuyInMicro, packageMaxPossibleMicro, packageAvgRoiPercent, packageAvgEdgePercent, packageAvgMarkup, serializeLeg } from '../services/packages.js';
+import { packageOfferingPricePerPercentMicro, packageTotalValueMicro, packageBuyInMicro, packageMaxPossibleMicro, packageAvgRoiPercent, packageAvgEdgePercent, packageAvgMarkup, serializeLeg } from '../services/packages.js';
 import { HttpError, asyncRoute } from '../httpError.js';
 
 export const publicRoutes = Router();
@@ -44,7 +44,12 @@ function serializeTournamentPublic(t, purchases) {
 }
 
 function serializePackagePublic(pkg, purchases) {
-  const pricePerPercentMicro = packagePricePerPercentMicro(pkg.legs);
+  // El comprador siempre compra sobre una escala 0-100 = "todo lo puesto
+  // a la venta", no sobre la acción real del paquete/torneo. Por eso el
+  // precio por 1% que ve y paga es totalValueMicro/100, no el precio por
+  // 1% de la acción real (que puede ser mucho mayor si totalPercent<100).
+  const totalValueMicro = packageTotalValueMicro(pkg.legs, pkg.totalPercent);
+  const pricePerPercentMicro = Math.round(totalValueMicro / 100);
   return {
     id: pkg.id,
     name: pkg.name,
@@ -59,10 +64,7 @@ function serializePackagePublic(pkg, purchases) {
     legs: pkg.legs.map(serializeLeg),
     buyInMicro: packageBuyInMicro(pkg.legs),
     pricePerPercentMicro,
-    // Lo que le cuesta a un inversor quedarse con TODO lo que se pone a la
-    // venta (totalPercent puede ser menor a 100 si el organizador se
-    // queda con una parte) — no el valor de los torneos al 100%.
-    totalValueMicro: pricePerPercentMicro * pkg.totalPercent,
+    totalValueMicro,
     maxPossibleMicro: packageMaxPossibleMicro(pkg.legs),
     avgRoiPercent: packageAvgRoiPercent(pkg.legs),
     avgMarkup: packageAvgMarkup(pkg.legs),
@@ -229,7 +231,7 @@ publicRoutes.post('/:slug/packages/:id/purchase', purchaseLimiter, loadOrganizer
     if (p > avail + 0.001) throw new HttpError(409, `Solo quedan ${avail.toFixed(2)}% disponibles`);
 
     const receivingAddress = net === 'trc20' ? pkg.walletAddress : pkg.walletAddressEvm;
-    const baseAmountMicro = Math.round(p * packagePricePerPercentMicro(pkg.legs));
+    const baseAmountMicro = Math.round(p * packageOfferingPricePerPercentMicro(pkg.legs, pkg.totalPercent));
 
     let created = null;
     for (let tries = 0; tries < 40 && !created; tries++) {
