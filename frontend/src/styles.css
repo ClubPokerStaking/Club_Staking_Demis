@@ -19,6 +19,47 @@ body { margin: 0; }
 .pk-bg-brick-soft { background-color: rgba(192,97,82,0.14); }
 .pk-straw { color: #C9B27A; }
 .pk-bg-straw-soft { background-color: rgba(201,178,122,0.14); }
+
+/* Color exclusivo para "ventaja del comprador" — no se usa en ningún
+   otro lado (ni el dorado de precios/CTAs, ni el rojo de alertas), así
+   siempre salta a la vista como algo distinto y superior. */
+.pk-jade { color: #2FE6B0; }
+.pk-bg-jade-soft { background-color: rgba(47,230,176,0.13); }
+.pk-border-jade { border-color: rgba(47,230,176,0.55); }
+
+.pk-edge-hero {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(47,230,176,0.20), rgba(47,230,176,0.06));
+  border: 1px solid rgba(47,230,176,0.6);
+  box-shadow: 0 0 0 1px rgba(47,230,176,0.12), 0 0 22px rgba(47,230,176,0.28);
+}
+.pk-edge-hero.pk-edge-hero-negative {
+  background: linear-gradient(135deg, rgba(192,97,82,0.20), rgba(192,97,82,0.06));
+  border-color: rgba(192,97,82,0.6);
+  box-shadow: 0 0 0 1px rgba(192,97,82,0.12), 0 0 22px rgba(192,97,82,0.22);
+}
+.pk-edge-hero-label {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+.pk-edge-hero-value {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+@media (min-width: 640px) {
+  .pk-edge-hero-value { font-size: 1.35rem; }
+}
 .pk-ticket { position: relative; }
 .pk-notch { position: absolute; width: 18px; height: 18px; background: #0F1912; border-radius: 9999px; left: -9px; }
 .pk-notch-top { top: -9px; }

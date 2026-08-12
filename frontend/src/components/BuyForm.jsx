@@ -41,11 +41,9 @@ export default function BuyForm({ product, onSubmit }) {
         <h2 className="pk-display text-xl font-semibold">{product.name}</h2>
         <p className="pk-ivory-dim pk-detail-text pk-mono">Disponible: {product.availablePercent.toFixed(2)}% · {fmtUSDT(product.pricePerPercentMicro)} USDT por 1%{product.markup != null ? ` (markup ${Number(product.markup).toFixed(2)}x)` : ''}</p>
         {isPackage && product.avgRoiPercent != null && (
-          <div className="mt-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="pk-gold font-medium pk-detail-text">ROI estimado del paquete: {product.avgRoiPercent}%</span>
-              <EdgeBadge edgePercent={product.avgEdgePercent} size="lg" />
-            </div>
+          <div className="mt-3">
+            <EdgeBadge edgePercent={product.avgEdgePercent} variant="hero" label="Tu ventaja neta en este paquete" />
+            <p className="pk-ivory-dim pk-detail-text mt-1.5">ROI estimado del paquete: {product.avgRoiPercent}%</p>
             <p className="text-[11px] pk-ivory-dim opacity-70 mt-1">Ventaja estimada sobre el promedio — no incluye el upside de un resultado grande (mesa final, premio mayor).</p>
           </div>
         )}

@@ -1,14 +1,27 @@
 // Muestra ROI estimado menos el sobreprecio que se cobra ("markup"), para
 // que se vea de un vistazo si el comprador sigue ganando después de pagar
 // el markup, o si el markup se come el ROI esperado.
-export default function EdgeBadge({ edgePercent, size = 'sm' }) {
+//
+// variant="hero" es el tratamiento destacado (color propio + tipografía
+// distinta) para el número que más importa mostrar: la ventaja neta del
+// paquete completo. variant="inline" es la versión chica para cada
+// torneo individual dentro del desglose.
+export default function EdgeBadge({ edgePercent, variant = 'inline', label }) {
   if (edgePercent == null) return null;
   const positive = edgePercent >= 0;
-  const cls = positive ? 'pk-gold pk-bg-gold-soft' : 'pk-brick pk-bg-brick-soft';
-  const pad = size === 'lg' ? 'px-3 py-1.5' : 'px-2 py-0.5';
-  const text = size === 'lg' ? 'text-sm' : 'text-[10px]';
+
+  if (variant === 'hero') {
+    return (
+      <span className={`pk-edge-hero ${positive ? '' : 'pk-edge-hero-negative'}`}>
+        <span className={`pk-edge-hero-label ${positive ? 'pk-jade' : 'pk-brick'}`}>{label || 'Ventaja del comprador'}</span>
+        <span className={`pk-edge-hero-value ${positive ? 'pk-jade' : 'pk-brick'}`}>{positive ? '+' : ''}{edgePercent}%</span>
+      </span>
+    );
+  }
+
+  const cls = positive ? 'pk-jade pk-bg-jade-soft' : 'pk-brick pk-bg-brick-soft';
   return (
-    <span className={`${cls} ${pad} ${text} rounded-full font-semibold whitespace-nowrap`}>
+    <span className={`${cls} px-2 py-0.5 text-[10px] rounded-full font-semibold whitespace-nowrap`}>
       {positive ? '+' : ''}{edgePercent}% {positive ? 'a tu favor' : 'en contra'}
     </span>
   );

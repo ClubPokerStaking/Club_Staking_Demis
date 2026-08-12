@@ -191,12 +191,14 @@ export default function BuyerSite() {
                           {fmtUSDT(item.pricePerPercentMicro)} / 1%
                         </span>
                       </div>
+                      {isPackage && item.avgEdgePercent != null && (
+                        <EdgeBadge edgePercent={item.avgEdgePercent} variant="hero" label="Ventaja para vos" />
+                      )}
                       <div className="flex items-center gap-3 pk-detail-text pk-ivory-dim pk-mono flex-wrap">
                         {item.markup != null && <span>Markup {Number(item.markup).toFixed(2)}x</span>}
                         {item.maxBullets > 1 && <span>Hasta {item.maxBullets} balas</span>}
                         {item.roiEstimado != null && <span>ROI est. {item.roiEstimado}%</span>}
                         {isPackage && item.avgRoiPercent != null && <span className="pk-gold">ROI est. paquete {item.avgRoiPercent}%</span>}
-                        {isPackage && <EdgeBadge edgePercent={item.avgEdgePercent} />}
                       </div>
                       {isPackage && (
                         <button

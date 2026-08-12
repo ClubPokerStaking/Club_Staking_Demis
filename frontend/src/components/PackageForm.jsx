@@ -128,9 +128,8 @@ export default function PackageForm({ form, onChange, editing, onSubmit, onCance
           <p className="text-sm pk-gold pk-mono">Precio por 1% del paquete (automático) → {pricePerPercent.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} USDT</p>
           <p className="text-xs pk-ivory-dim pk-mono">Buy-in combinado: {totalBuyIn.toLocaleString('es-AR', { minimumFractionDigits: 2 })} USDT{avgRoi != null ? ` · ROI promedio del paquete: ${avgRoi.toFixed(1)}%` : ''}</p>
           {avgEdge != null && (
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs pk-ivory-dim">Ventaja neta promedio para el comprador:</span>
-              <EdgeBadge edgePercent={avgEdge} size="lg" />
+            <div className="mt-1">
+              <EdgeBadge edgePercent={avgEdge} variant="hero" label="Así lo va a ver el comprador" />
             </div>
           )}
         </div>
