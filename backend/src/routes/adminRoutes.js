@@ -41,7 +41,10 @@ function parseTournamentInput(body) {
   const markup = Number(body.markup) || 1;
   const buyIn = Number(body.buyIn) || 0;
   const buyInMicro = Math.round(buyIn * 1_000_000);
-  const pricePerPercentMicro = Math.round((buyInMicro * markup) / 100);
+  const maxBullets = Math.max(1, Number(body.maxBullets) || 1);
+  // El precio por 1% cubre el costo de TODAS las balas posibles (se cobra
+  // por adelantado y se devuelve lo no jugado) — ver services/packages.js.
+  const pricePerPercentMicro = Math.round((buyInMicro * maxBullets * markup) / 100);
   const name = String(body.name || '').trim().slice(0, 200);
   const walletAddress = String(body.walletAddress || '').trim();
   if (!name) throw new HttpError(400, 'Falta el nombre del torneo');
@@ -55,7 +58,7 @@ function parseTournamentInput(body) {
     buyInMicro,
     totalPercent,
     markup,
-    maxBullets: Math.max(1, Number(body.maxBullets) || 1),
+    maxBullets,
     roiEstimado: body.roiEstimado !== '' && body.roiEstimado != null ? Number(body.roiEstimado) : null,
     pricePerPercentMicro,
     walletAddress,

@@ -184,7 +184,10 @@ export default function BuyerSite() {
                               <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${live.cls}`}>{live.label}</span>
                             </div>
                           )}
-                          {item.buyInMicro > 0 && <p className="pk-ivory-dim text-sm pk-mono mt-1">Buy-in {fmtUSDT(item.buyInMicro)} USDT{isPackage ? ` (${item.legs.length} torneos)` : ''}</p>}
+                          {isPackage && item.maxPossibleMicro > 0 && (
+                            <p className="pk-ivory-dim text-sm pk-mono mt-1">Entradas + reentries: {fmtUSDT(item.maxPossibleMicro)} USDT ({item.legs.length} torneos)</p>
+                          )}
+                          {!isPackage && item.buyInMicro > 0 && <p className="pk-ivory-dim text-sm pk-mono mt-1">Buy-in {fmtUSDT(item.buyInMicro)} USDT</p>}
                           {isPackage && (
                             <a
                               href={`/o/${slug}/perfil`}

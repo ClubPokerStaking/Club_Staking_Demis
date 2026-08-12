@@ -62,12 +62,14 @@ export default function PackageForm({ form, onChange, editing, onSubmit, onCance
     onChange({ ...form, legs: form.legs.filter((_, idx) => idx !== i) });
   }
 
+  // El precio por 1% cubre el costo de TODAS las balas posibles de cada
+  // torneo (se cobra por adelantado y se devuelve lo no jugado).
   const pricePerPercent = form.legs.reduce((sum, l) => {
     const buyIn = Number(l.buyIn) || 0;
     const markup = Number(l.markup) || 0;
-    return sum + (buyIn * markup) / 100;
+    const maxBullets = Number(l.maxBullets) || 1;
+    return sum + (buyIn * maxBullets * markup) / 100;
   }, 0);
-  const totalBuyIn = form.legs.reduce((sum, l) => sum + (Number(l.buyIn) || 0), 0);
   const maxPossible = form.legs.reduce((sum, l) => sum + (Number(l.buyIn) || 0) * (Number(l.maxBullets) || 1), 0);
   const legsWithRoi = form.legs.filter((l) => l.roiEstimado !== '' && l.roiEstimado != null);
   const avgRoi = legsWithRoi.length > 0
@@ -125,19 +127,14 @@ export default function PackageForm({ form, onChange, editing, onSubmit, onCance
 
       {pricePerPercent > 0 && (
         <div className="pk-bg-gold-soft rounded-lg px-3 py-2 flex flex-col gap-1">
-          <p className="text-sm pk-gold pk-mono">Precio por 1% del paquete (automático) → {pricePerPercent.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} USDT</p>
-          <p className="text-xs pk-ivory-dim pk-mono">Buy-in combinado: {totalBuyIn.toLocaleString('es-AR', { minimumFractionDigits: 2 })} USDT{avgRoi != null ? ` · ROI promedio del paquete: ${avgRoi.toFixed(1)}%` : ''}</p>
+          <p className="text-sm pk-gold pk-mono">Precio por 1% del paquete (automático, cubre todas las balas) → {pricePerPercent.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} USDT</p>
+          <p className="text-xs pk-ivory-dim pk-mono">Entradas + reentries: {maxPossible.toLocaleString('es-AR', { minimumFractionDigits: 2 })} USDT{avgRoi != null ? ` · ROI promedio del paquete: ${avgRoi.toFixed(1)}%` : ''}</p>
           {avgEdge != null && (
             <div className="mt-1">
               <EdgeBadge edgePercent={avgEdge} variant="hero" label="Así lo va a ver el comprador" />
             </div>
           )}
         </div>
-      )}
-      {maxPossible > totalBuyIn && (
-        <p className="text-xs pk-straw pk-bg-straw-soft rounded-lg px-3 py-2">
-          Usando todas las balas de cada torneo incluido, la inversión total posible es {maxPossible.toLocaleString('es-AR', { minimumFractionDigits: 2 })} USDT.
-        </p>
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>

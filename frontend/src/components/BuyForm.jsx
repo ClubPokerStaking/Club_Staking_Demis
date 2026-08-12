@@ -40,6 +40,9 @@ export default function BuyForm({ product, onSubmit }) {
       <div>
         <h2 className="pk-display text-xl font-semibold">{product.name}</h2>
         <p className="pk-ivory-dim pk-detail-text pk-mono">Disponible: {product.availablePercent.toFixed(2)}% · {fmtUSDT(product.pricePerPercentMicro)} USDT por 1%{product.markup != null ? ` (markup ${Number(product.markup).toFixed(2)}x)` : ''}</p>
+        {isPackage && product.maxPossibleMicro > 0 && (
+          <p className="pk-ivory-dim pk-detail-text pk-mono mt-1">Entradas + reentries: {fmtUSDT(product.maxPossibleMicro)} USDT ({product.legs?.length} torneos)</p>
+        )}
         {isPackage && product.avgRoiPercent != null && (
           <div className="pk-package-highlight-box mt-3">
             <p className="pk-detail-text pk-gold pk-mono">ROI est. paquete: {product.avgRoiPercent}%{product.avgMarkup != null ? ` · Markup promedio ${Number(product.avgMarkup).toFixed(2)}x` : ''}</p>

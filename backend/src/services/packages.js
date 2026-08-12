@@ -1,8 +1,12 @@
 // Un paquete no guarda su propio precio: se calcula siempre a partir de
 // los torneos que lo componen, para que nunca quede desincronizado si se
 // edita un torneo incluido.
+//
+// El precio por 1% cubre el costo de TODAS las balas posibles del torneo
+// (se cobra por adelantado, como si el 100% de las re-entries se fuera a
+// jugar, y se devuelve lo no jugado) — no solo la primera bala.
 export function legPricePerPercentMicro(leg) {
-  return Math.round((leg.buyInMicro * leg.markup) / 100);
+  return Math.round((leg.buyInMicro * leg.maxBullets * leg.markup) / 100);
 }
 
 export function packagePricePerPercentMicro(legs) {
