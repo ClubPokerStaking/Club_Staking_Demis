@@ -87,16 +87,24 @@ export default function PackageForm({ form, onChange, editing, onSubmit, onCance
 
       <div className="flex flex-col gap-3">
         <p className="text-sm pk-ivory-dim">Torneos incluidos</p>
+        <div className="hidden sm:grid gap-2 text-[10px] pk-ivory-dim px-3" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr auto' }}>
+          <span>Nombre</span>
+          <span>Buy-in (USDT)</span>
+          <span>Markup — múltiplo, ej. 1.20 = 20% de recargo</span>
+          <span>ROI % — ej. 30 = 30%</span>
+          <span>Balas máx.</span>
+          <span></span>
+        </div>
         {form.legs.map((leg, i) => {
           const edge = legEdgePercent(leg);
           return (
             <div key={i} className="pk-surface2 pk-border border rounded-xl p-3 flex flex-col gap-2">
               <div className="grid gap-2" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr auto' }}>
                 <input placeholder="ej: Main Event" value={leg.name} onChange={(e) => setLeg(i, 'name', e.target.value)} className={smallInputCls} />
-                <input placeholder="Buy-in USDT" type="number" value={leg.buyIn} onChange={(e) => setLeg(i, 'buyIn', e.target.value)} className={smallInputCls} />
-                <input placeholder="Markup (venta)" type="number" step="0.01" value={leg.markup} onChange={(e) => setLeg(i, 'markup', e.target.value)} className={smallInputCls} />
-                <input placeholder="ROI %" type="number" value={leg.roiEstimado} onChange={(e) => setLeg(i, 'roiEstimado', e.target.value)} className={smallInputCls} />
-                <input placeholder="Balas" type="number" min="1" value={leg.maxBullets} onChange={(e) => setLeg(i, 'maxBullets', e.target.value)} className={smallInputCls} />
+                <input placeholder="ej: 500" type="number" value={leg.buyIn} onChange={(e) => setLeg(i, 'buyIn', e.target.value)} className={smallInputCls} title="Buy-in en USDT" />
+                <input placeholder="ej: 1.20" type="number" step="0.01" value={leg.markup} onChange={(e) => setLeg(i, 'markup', e.target.value)} className={smallInputCls} title="Múltiplo de venta: 1.20 = 20% de recargo (NO pongas 20)" />
+                <input placeholder="ej: 30" type="number" value={leg.roiEstimado} onChange={(e) => setLeg(i, 'roiEstimado', e.target.value)} className={smallInputCls} title="Porcentaje entero: 30 = 30%" />
+                <input placeholder="ej: 1" type="number" min="1" value={leg.maxBullets} onChange={(e) => setLeg(i, 'maxBullets', e.target.value)} className={smallInputCls} title="Cantidad máxima de re-entries" />
                 <button type="button" onClick={() => removeLeg(i)} disabled={form.legs.length <= 1} className="pk-brick hover:opacity-80 disabled:opacity-30 flex items-center justify-center">
                   <Trash2 size={16} />
                 </button>

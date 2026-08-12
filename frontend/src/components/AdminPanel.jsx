@@ -281,16 +281,16 @@ export default function AdminPanel({ onLogout }) {
             <input placeholder="100" type="number" value={form.totalPercent} onChange={(e) => setForm({ ...form, totalPercent: e.target.value })} className={inputCls} />
           </label>
           <label className="text-sm pk-ivory-dim">
-            Markup (ej: 1.2 = 20%)
-            <input placeholder="1.00" type="number" step="0.01" min="0" value={form.markup} onChange={(e) => setForm({ ...form, markup: e.target.value })} className={inputCls} />
+            Markup — múltiplo, no %. ej: 1.20 = 20% de recargo
+            <input placeholder="ej: 1.20" type="number" step="0.01" min="0" value={form.markup} onChange={(e) => setForm({ ...form, markup: e.target.value })} className={inputCls} title="Poné 1.20 para un 20% de recargo. NO pongas 20." />
           </label>
           <label className="text-sm pk-ivory-dim">
             Balas / re-entries (máx.)
             <input placeholder="1" type="number" min="1" step="1" value={form.maxBullets} onChange={(e) => setForm({ ...form, maxBullets: e.target.value })} className={inputCls} />
           </label>
           <label className="text-sm pk-ivory-dim">
-            ROI estimado % (opcional)
-            <input placeholder="ej: 25" type="number" value={form.roiEstimado} onChange={(e) => setForm({ ...form, roiEstimado: e.target.value })} className={inputCls} />
+            ROI estimado % (opcional) — número entero, ej: 30 = 30%
+            <input placeholder="ej: 30" type="number" value={form.roiEstimado} onChange={(e) => setForm({ ...form, roiEstimado: e.target.value })} className={inputCls} title="Poné 30 para 30%. NO pongas 0.30." />
           </label>
           {computedPrice > 0 && (
             <p className="sm:col-span-2 text-sm pk-gold pk-mono pk-bg-gold-soft rounded-lg px-3 py-2">Precio por 1% (automático) → {computedPrice.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} USDT</p>
