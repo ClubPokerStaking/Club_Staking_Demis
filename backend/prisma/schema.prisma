@@ -113,6 +113,9 @@ model PackageLeg {
   roiEstimado Float?
   maxBullets  Int    @default(1)
   sortOrder   Int    @default(0)
+  // Estado libre de ESTE torneo puntual (ej. "Finalizó, puesto 38"),
+  // editable aparte sin tener que reeditar el paquete entero.
+  liveNote    String @default("")
 
   @@index([packageId])
 }

@@ -52,6 +52,7 @@ export const api = {
   adminUpdatePackage: (id, data) => put(`/admin/packages/${id}`, data),
   adminTogglePackageClose: (id) => post(`/admin/packages/${id}/toggle-close`),
   adminUpdatePackageLiveStatus: (id, data) => put(`/admin/packages/${id}/live-status`, data),
+  adminUpdatePackageLegLiveNote: (packageId, legId, liveNote) => put(`/admin/packages/${packageId}/legs/${legId}/live-note`, { liveNote }),
   adminDeletePackage: (id) => del(`/admin/packages/${id}`),
   adminPurchases: () => get('/admin/purchases'),
   adminSetPurchaseStatus: (id, status) => put(`/admin/purchases/${id}/status`, { status }),

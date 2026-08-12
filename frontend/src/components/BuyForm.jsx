@@ -40,17 +40,24 @@ export default function BuyForm({ product, onSubmit }) {
       <div>
         <h2 className="pk-display text-xl font-semibold">{product.name}</h2>
         <p className="pk-ivory-dim pk-detail-text pk-mono">Disponible: {product.availablePercent.toFixed(2)}% · {fmtUSDT(product.pricePerPercentMicro)} USDT por 1%{product.markup != null ? ` (markup ${Number(product.markup).toFixed(2)}x)` : ''}</p>
-        {isPackage && product.currentLegName && (
-          <p className="pk-ivory-dim text-sm mt-1">Jugando ahora: <b className="pk-ivory">{product.currentLegName}</b></p>
-        )}
         {isPackage && product.avgRoiPercent != null && (
           <div className="mt-3">
             <EdgeBadge edgePercent={product.avgEdgePercent} variant="hero" label="Tu ventaja neta en este paquete" fullWidth />
-            <p className="pk-ivory-dim pk-detail-text mt-1.5">ROI estimado del paquete: {product.avgRoiPercent}%</p>
+            <p className="pk-ivory-dim pk-detail-text mt-1.5">ROI est. paquete: {product.avgRoiPercent}%{product.avgMarkup != null ? ` · Markup promedio ${Number(product.avgMarkup).toFixed(2)}x` : ''}</p>
             <p className="text-[11px] pk-ivory-dim opacity-70 mt-1">Ventaja estimada sobre el promedio — no incluye el upside de un resultado grande (mesa final, premio mayor).</p>
           </div>
         )}
       </div>
+      {isPackage && product.legs && product.legs.some((l) => l.liveNote) && (
+        <div className="pk-leg-status-box">
+          {product.legs.filter((l) => l.liveNote).map((l) => (
+            <div key={l.id} className="flex items-center justify-between gap-3 pk-detail-text">
+              <span className="pk-ivory-dim">{l.name}</span>
+              <span className="pk-ivory text-right">{l.liveNote}</span>
+            </div>
+          ))}
+        </div>
+      )}
       {isPackage && product.legs && (
         <div className="pk-bg pk-border border rounded-xl p-3 flex flex-col gap-2">
           <p className="pk-ivory-dim pk-detail-label">Este paquete incluye:</p>

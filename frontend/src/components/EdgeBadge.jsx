@@ -11,12 +11,16 @@ export default function EdgeBadge({ edgePercent, variant = 'inline', label, full
   if (edgePercent == null) return null;
   const positive = edgePercent >= 0;
 
+  // El cartel destacado solo tiene sentido como algo para mostrar con
+  // orgullo — si no hay ventaja real para el comprador, no mostramos
+  // nada en vez de anunciar un número negativo en grande.
   if (variant === 'hero') {
-    const heroCls = ['pk-edge-hero', fullWidth ? 'pk-edge-hero-full' : '', positive ? '' : 'pk-edge-hero-negative'].filter(Boolean).join(' ');
+    if (edgePercent <= 0) return null;
+    const heroCls = ['pk-edge-hero', fullWidth ? 'pk-edge-hero-full' : ''].filter(Boolean).join(' ');
     return (
       <span className={heroCls}>
-        <span className={`pk-edge-hero-label ${positive ? 'pk-jade' : 'pk-brick'}`}>{label || 'Ventaja del comprador'}</span>
-        <span className={`pk-edge-hero-value ${positive ? 'pk-jade' : 'pk-brick'}`}>{positive ? '+' : ''}{edgePercent}%</span>
+        <span className="pk-edge-hero-label pk-jade">{label || 'Ventaja del comprador'}</span>
+        <span className="pk-edge-hero-value pk-jade">+{edgePercent}%</span>
       </span>
     );
   }

@@ -8,7 +8,7 @@ import { loadOrganizerPublic } from '../middleware/loadOrganizerPublic.js';
 import { buyerGateFor } from '../middleware/buyerGate.js';
 import { availablePercent, genAmountSuffix, genCode } from '../services/amounts.js';
 import { verifyPurchase, NETWORKS } from '../services/chainVerify.js';
-import { packagePricePerPercentMicro, packageBuyInMicro, packageMaxPossibleMicro, packageAvgRoiPercent, packageAvgEdgePercent, serializeLeg } from '../services/packages.js';
+import { packagePricePerPercentMicro, packageBuyInMicro, packageMaxPossibleMicro, packageAvgRoiPercent, packageAvgEdgePercent, packageAvgMarkup, serializeLeg } from '../services/packages.js';
 import { HttpError, asyncRoute } from '../httpError.js';
 
 export const publicRoutes = Router();
@@ -60,6 +60,7 @@ function serializePackagePublic(pkg, purchases) {
     pricePerPercentMicro: packagePricePerPercentMicro(pkg.legs),
     maxPossibleMicro: packageMaxPossibleMicro(pkg.legs),
     avgRoiPercent: packageAvgRoiPercent(pkg.legs),
+    avgMarkup: packageAvgMarkup(pkg.legs),
     avgEdgePercent: packageAvgEdgePercent(pkg.legs),
     availablePercent: availablePercent(pkg, purchases),
   };

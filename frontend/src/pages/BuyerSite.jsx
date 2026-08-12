@@ -178,30 +178,50 @@ export default function BuyerSite() {
                       <div className="pk-notch pk-notch-bottom" />
                       <div className="pk-perforation" />
                       <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="pk-display font-semibold text-lg leading-snug">{item.name}</h3>
-                            {isPackage && <span className="pk-tag-big text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap pk-bg-straw-soft pk-straw">PAQUETE</span>}
-                          </div>
+                        <div className="min-w-0">
+                          <h3 className="pk-display font-semibold text-lg leading-snug">{item.name}</h3>
                           <div className="flex items-center gap-2 flex-wrap mt-1">
                             <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${live.cls}`}>{live.label}</span>
-                            {isPackage && item.currentLegName && <span className="pk-ivory-dim text-xs">— jugando ahora: <b className="pk-ivory">{item.currentLegName}</b></span>}
                           </div>
                           {item.buyInMicro > 0 && <p className="pk-ivory-dim text-sm pk-mono mt-1">Buy-in {fmtUSDT(item.buyInMicro)} USDT{isPackage ? ` (${item.legs.length} torneos)` : ''}</p>}
-                          {item.liveNote && <p className="pk-ivory-dim text-xs mt-0.5">{item.liveNote}</p>}
+                          {isPackage && (
+                            <a
+                              href={`/o/${slug}/perfil`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-xs pk-ivory-dim hover:opacity-80 flex items-center gap-1 mt-1"
+                            >
+                              <UserCircle2 size={12} /> Perfil del organizador
+                            </a>
+                          )}
                         </div>
-                        <span className="pk-bg-gold-soft pk-gold pk-border-gold border pk-mono text-xs px-2 py-1 rounded-full whitespace-nowrap">
-                          {fmtUSDT(item.pricePerPercentMicro)} / 1%
-                        </span>
+                        <div className="flex flex-col items-end gap-1.5 shrink-0">
+                          {isPackage && <span className="pk-badge-flag">PAQUETE</span>}
+                          <span className="pk-bg-gold-soft pk-gold pk-border-gold border pk-mono text-xs px-2 py-1 rounded-full whitespace-nowrap">
+                            {fmtUSDT(item.pricePerPercentMicro)} / 1%
+                          </span>
+                        </div>
                       </div>
                       {isPackage && item.avgEdgePercent != null && (
                         <EdgeBadge edgePercent={item.avgEdgePercent} variant="hero" label="Ventaja para vos" fullWidth />
+                      )}
+                      {isPackage && item.legs.some((l) => l.liveNote) && (
+                        <div className="pk-leg-status-box">
+                          {item.legs.filter((l) => l.liveNote).map((l) => (
+                            <div key={l.id} className="flex items-center justify-between gap-3 pk-detail-text">
+                              <span className="pk-ivory-dim">{l.name}</span>
+                              <span className="pk-ivory text-right">{l.liveNote}</span>
+                            </div>
+                          ))}
+                        </div>
                       )}
                       <div className="flex items-center gap-3 pk-detail-text pk-ivory-dim pk-mono flex-wrap">
                         {item.markup != null && <span>Markup {Number(item.markup).toFixed(2)}x</span>}
                         {item.maxBullets > 1 && <span>Hasta {item.maxBullets} balas</span>}
                         {item.roiEstimado != null && <span>ROI est. {item.roiEstimado}%</span>}
-                        {isPackage && item.avgRoiPercent != null && <span className="pk-gold">ROI est. paquete {item.avgRoiPercent}%</span>}
+                        {isPackage && item.avgRoiPercent != null && (
+                          <span className="pk-gold">ROI est. paquete {item.avgRoiPercent}%{item.avgMarkup != null ? ` · Markup promedio ${Number(item.avgMarkup).toFixed(2)}x` : ''}</span>
+                        )}
                       </div>
                       {isPackage && (
                         <div className="flex items-center gap-4 flex-wrap">
@@ -212,14 +232,6 @@ export default function BuyerSite() {
                           >
                             {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />} {expanded ? 'Ocultar desglose' : 'Ver qué incluye'}
                           </button>
-                          <a
-                            href={`/o/${slug}/perfil`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-xs pk-ivory-dim hover:opacity-80 flex items-center gap-1"
-                          >
-                            <UserCircle2 size={12} /> Perfil del organizador
-                          </a>
                         </div>
                       )}
                       {isPackage && expanded && (
@@ -297,24 +309,24 @@ export default function BuyerSite() {
                     })()}
                   </div>
                   <p className="pk-ivory-dim text-sm pk-mono">{lookupResult.percent}% · {fmtUSDT(lookupResult.uniqueAmountMicro)} USDT</p>
-                  {lookupResult.productType === 'package' && lookupResult.currentLegName && (
-                    <p className="pk-ivory-dim text-xs mt-0.5">Jugando ahora: <b className="pk-ivory">{lookupResult.currentLegName}</b></p>
-                  )}
                   {lookupResult.productType === 'package' && lookupResult.legs && (
                     <div className="pk-bg pk-border border rounded-xl p-3 mt-2 flex flex-col gap-2">
                       {lookupResult.legs.map((l) => (
-                        <div key={l.id} className="flex items-center justify-between pk-detail-text pk-mono gap-3 flex-wrap">
-                          <span className="pk-ivory">{l.name}</span>
-                          <div className="flex items-center gap-2">
-                            <span className="pk-ivory-dim text-right">{fmtUSDT(l.buyInMicro)} USDT · venta {Number(l.markup).toFixed(2)}x</span>
-                            <EdgeBadge edgePercent={l.edgePercent} />
+                        <div key={l.id} className="flex flex-col gap-0.5">
+                          <div className="flex items-center justify-between pk-detail-text pk-mono gap-3 flex-wrap">
+                            <span className="pk-ivory">{l.name}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="pk-ivory-dim text-right">{fmtUSDT(l.buyInMicro)} USDT · venta {Number(l.markup).toFixed(2)}x</span>
+                              <EdgeBadge edgePercent={l.edgePercent} />
+                            </div>
                           </div>
+                          {l.liveNote && <p className="pk-ivory-dim text-xs">{l.liveNote}</p>}
                         </div>
                       ))}
                       {lookupResult.notes && <p className="text-xs pk-straw pt-1.5 pk-border border-t mt-0.5">{lookupResult.notes}</p>}
                     </div>
                   )}
-                  {lookupResult.liveNote && <p className="pk-ivory-dim text-xs mt-0.5">{lookupResult.liveNote}</p>}
+                  {lookupResult.productType !== 'package' && lookupResult.liveNote && <p className="pk-ivory-dim text-xs mt-0.5">{lookupResult.liveNote}</p>}
                   <p className={`mt-2 text-sm font-medium ${lookupResult.status === 'confirmado' ? 'pk-gold' : lookupResult.status === 'rechazado' ? 'pk-brick' : 'pk-straw'}`}>
                     Estado del pago: {lookupResult.status}
                   </p>

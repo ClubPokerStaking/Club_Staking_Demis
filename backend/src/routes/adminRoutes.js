@@ -4,7 +4,7 @@ import { requireOrganizerAuth } from '../middleware/requireOrganizerAuth.js';
 import { hashPassword } from '../auth/password.js';
 import { availablePercent } from '../services/amounts.js';
 import { verifyPurchase, testEtherscanKey } from '../services/chainVerify.js';
-import { packagePricePerPercentMicro, packageBuyInMicro, packageMaxPossibleMicro, packageAvgRoiPercent, packageAvgEdgePercent, serializeLeg } from '../services/packages.js';
+import { packagePricePerPercentMicro, packageBuyInMicro, packageMaxPossibleMicro, packageAvgRoiPercent, packageAvgEdgePercent, packageAvgMarkup, serializeLeg } from '../services/packages.js';
 import { HttpError, asyncRoute } from '../httpError.js';
 
 export const adminRoutes = Router();
@@ -136,6 +136,7 @@ function serializePackageAdmin(pkg, purchases) {
     pricePerPercentMicro: packagePricePerPercentMicro(pkg.legs),
     maxPossibleMicro: packageMaxPossibleMicro(pkg.legs),
     avgRoiPercent: packageAvgRoiPercent(pkg.legs),
+    avgMarkup: packageAvgMarkup(pkg.legs),
     avgEdgePercent: packageAvgEdgePercent(pkg.legs),
     availablePercent: availablePercent(pkg, purchases),
   };
@@ -253,6 +254,20 @@ adminRoutes.delete('/packages/:id', asyncRoute(async (req, res) => {
   await loadOwnPackage(req.organizer.id, req.params.id);
   await prisma.package.delete({ where: { id: req.params.id } });
   res.json({ ok: true });
+}));
+
+// Actualiza el estado de UN torneo puntual dentro del paquete, sin tocar
+// el resto (a diferencia de editar el paquete, que reemplaza todos los
+// torneos incluidos).
+adminRoutes.put('/packages/:packageId/legs/:legId/live-note', asyncRoute(async (req, res) => {
+  const pkg = await loadOwnPackage(req.organizer.id, req.params.packageId);
+  const leg = pkg.legs.find((l) => l.id === req.params.legId);
+  if (!leg) throw new HttpError(404, 'Torneo no encontrado en este paquete');
+  const liveNote = String(req.body?.liveNote || '').trim().slice(0, 200);
+  await prisma.packageLeg.update({ where: { id: leg.id }, data: { liveNote } });
+  const updated = await prisma.package.findUnique({ where: { id: pkg.id }, include: { legs: true } });
+  const purchases = await prisma.purchase.findMany({ where: { packageId: pkg.id } });
+  res.json(serializePackageAdmin(updated, purchases));
 }));
 
 // --- Compras (de torneos o de paquetes) ---

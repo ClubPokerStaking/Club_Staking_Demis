@@ -50,6 +50,14 @@ export function packageAvgEdgePercent(legs) {
   return Math.round((edges.reduce((s, e) => s + e, 0) / edges.length) * 10) / 10;
 }
 
+// Promedio simple del markup de cada torneo incluido (ej. 1.25x) — se
+// muestra junto al ROI para que se vea de dónde sale la ventaja.
+export function packageAvgMarkup(legs) {
+  if (legs.length === 0) return null;
+  const sum = legs.reduce((s, l) => s + l.markup, 0);
+  return Math.round((sum / legs.length) * 100) / 100;
+}
+
 export function serializeLeg(leg) {
   return {
     id: leg.id,
@@ -60,6 +68,7 @@ export function serializeLeg(leg) {
     roiEstimado: leg.roiEstimado,
     edgePercent: legEdgePercent(leg),
     maxBullets: leg.maxBullets,
+    liveNote: leg.liveNote || '',
     pricePerPercentMicro: legPricePerPercentMicro(leg),
   };
 }

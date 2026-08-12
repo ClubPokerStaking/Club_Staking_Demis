@@ -193,6 +193,11 @@ export default function AdminPanel({ onLogout }) {
     setPackages((prev) => prev.map((x) => (x.id === pkg.id ? updated : x)));
   }
 
+  async function updateLegLiveNote(pkg, legId, liveNote) {
+    const updated = await api.adminUpdatePackageLegLiveNote(pkg.id, legId, liveNote);
+    setPackages((prev) => prev.map((x) => (x.id === pkg.id ? updated : x)));
+  }
+
   async function deletePackage(pkg) {
     if (!window.confirm(`¿Borrar el paquete "${pkg.name}" y todas sus compras? No se puede deshacer.`)) return;
     await api.adminDeletePackage(pkg.id);
@@ -398,22 +403,31 @@ export default function AdminPanel({ onLogout }) {
                   <option value="finalizado">Finalizado</option>
                   <option value="cancelado">Cancelado</option>
                 </select>
-                <select
-                  value={pkg.currentLegName || ''}
-                  onChange={(e) => updatePackageLiveStatus(pkg, pkg.liveStatus || 'registro', pkg.liveNote || '', e.target.value)}
-                  className="pk-bg pk-border border pk-ivory text-xs rounded-lg px-2 py-1 focus:outline-none"
-                >
-                  <option value="">¿Jugando cuál torneo? (ninguno)</option>
-                  {pkg.legs.map((l) => <option key={l.id} value={l.name}>{l.name}</option>)}
-                </select>
                 <input
                   defaultValue={pkg.liveNote || ''}
                   onBlur={(e) => e.target.value !== (pkg.liveNote || '') && updatePackageLiveStatus(pkg, pkg.liveStatus || 'registro', e.target.value, pkg.currentLegName || '')}
                   onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
-                  placeholder="Nota rápida"
+                  placeholder="Nota general del paquete (opcional)"
                   className="flex-1 pk-bg pk-border border pk-ivory text-xs rounded-lg px-2 py-1 focus:outline-none"
                   style={{ minWidth: 160 }}
                 />
+              </div>
+              <div className="pk-border border-t pt-2.5">
+                <p className="text-xs pk-ivory-dim mb-2">Estado de cada torneo (se lo ve el comprador automáticamente):</p>
+                <div className="flex flex-col gap-1.5">
+                  {pkg.legs.map((leg) => (
+                    <div key={leg.id} className="flex items-center gap-2">
+                      <span className="text-xs pk-ivory-dim" style={{ width: 140, flexShrink: 0 }}>{leg.name}</span>
+                      <input
+                        defaultValue={leg.liveNote || ''}
+                        onBlur={(e) => e.target.value !== (leg.liveNote || '') && updateLegLiveNote(pkg, leg.id, e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+                        placeholder="ej: Finalizó, puesto 38"
+                        className="flex-1 pk-bg pk-border border pk-ivory text-xs rounded-lg px-2 py-1 focus:outline-none"
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           ))}
