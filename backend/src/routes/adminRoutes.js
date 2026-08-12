@@ -4,7 +4,7 @@ import { requireOrganizerAuth } from '../middleware/requireOrganizerAuth.js';
 import { hashPassword } from '../auth/password.js';
 import { availablePercent } from '../services/amounts.js';
 import { verifyPurchase, testEtherscanKey } from '../services/chainVerify.js';
-import { packagePricePerPercentMicro, packageBuyInMicro, packageMaxPossibleMicro, packageAvgRoiPercent, serializeLeg } from '../services/packages.js';
+import { packagePricePerPercentMicro, packageBuyInMicro, packageMaxPossibleMicro, packageAvgRoiPercent, packageAvgEdgePercent, serializeLeg } from '../services/packages.js';
 import { HttpError, asyncRoute } from '../httpError.js';
 
 export const adminRoutes = Router();
@@ -135,6 +135,7 @@ function serializePackageAdmin(pkg, purchases) {
     pricePerPercentMicro: packagePricePerPercentMicro(pkg.legs),
     maxPossibleMicro: packageMaxPossibleMicro(pkg.legs),
     avgRoiPercent: packageAvgRoiPercent(pkg.legs),
+    avgEdgePercent: packageAvgEdgePercent(pkg.legs),
     availablePercent: availablePercent(pkg, purchases),
   };
 }

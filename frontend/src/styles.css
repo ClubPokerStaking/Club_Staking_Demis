@@ -121,3 +121,12 @@ a { text-decoration: none; color: inherit; }
   .sm\:col-span-2 { grid-column: span 2 / span 2; }
   .sm\:inline { display: inline; }
 }
+
+/* Texto de detalle (desgloses, precios) — compacto en celular, más
+   grande y cómodo de leer en pantallas anchas donde sobra espacio. */
+.pk-detail-text { font-size: 0.75rem; line-height: 1.5; }
+.pk-detail-label { font-size: 0.72rem; }
+@media (min-width: 640px) {
+  .pk-detail-text { font-size: 0.95rem; line-height: 1.6; }
+  .pk-detail-label { font-size: 0.85rem; }
+}

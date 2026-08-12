@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { fmtUSDT, NETWORKS } from '../format.js';
+import EdgeBadge from './EdgeBadge.jsx';
 
 export default function BuyForm({ product, onSubmit }) {
   const [percent, setPercent] = useState('');
@@ -38,18 +39,24 @@ export default function BuyForm({ product, onSubmit }) {
     <div className="pk-surface pk-border border rounded-2xl p-6 flex flex-col gap-4">
       <div>
         <h2 className="pk-display text-xl font-semibold">{product.name}</h2>
-        <p className="pk-ivory-dim text-sm pk-mono">Disponible: {product.availablePercent.toFixed(2)}% · {fmtUSDT(product.pricePerPercentMicro)} USDT por 1%{product.markup != null ? ` (markup ${Number(product.markup).toFixed(2)}x)` : ''}</p>
+        <p className="pk-ivory-dim pk-detail-text pk-mono">Disponible: {product.availablePercent.toFixed(2)}% · {fmtUSDT(product.pricePerPercentMicro)} USDT por 1%{product.markup != null ? ` (markup ${Number(product.markup).toFixed(2)}x)` : ''}</p>
         {isPackage && product.avgRoiPercent != null && (
-          <p className="text-sm pk-gold font-medium mt-1">ROI estimado del paquete: {product.avgRoiPercent}%</p>
+          <div className="flex items-center gap-2 flex-wrap mt-2">
+            <span className="pk-gold font-medium pk-detail-text">ROI estimado del paquete: {product.avgRoiPercent}%</span>
+            <EdgeBadge edgePercent={product.avgEdgePercent} size="lg" />
+          </div>
         )}
       </div>
       {isPackage && product.legs && (
-        <div className="pk-bg pk-border border rounded-xl p-3 flex flex-col gap-1.5">
-          <p className="text-xs pk-ivory-dim">Este paquete incluye:</p>
+        <div className="pk-bg pk-border border rounded-xl p-3 flex flex-col gap-2">
+          <p className="pk-ivory-dim pk-detail-label">Este paquete incluye:</p>
           {product.legs.map((l) => (
-            <div key={l.id} className="flex items-center justify-between text-xs pk-mono gap-3">
+            <div key={l.id} className="flex items-center justify-between pk-detail-text pk-mono gap-3 flex-wrap">
               <span className="pk-ivory">{l.name}</span>
-              <span className="pk-ivory-dim text-right">{fmtUSDT(l.buyInMicro)} USDT · venta {Number(l.markup).toFixed(2)}x{l.roiEstimado != null ? ` · ROI ${l.roiEstimado}%` : ''}{l.maxBullets > 1 ? ` · hasta ${l.maxBullets} balas` : ''}</span>
+              <div className="flex items-center gap-2">
+                <span className="pk-ivory-dim text-right">{fmtUSDT(l.buyInMicro)} USDT · venta {Number(l.markup).toFixed(2)}x{l.roiEstimado != null ? ` · ROI ${l.roiEstimado}%` : ''}{l.maxBullets > 1 ? ` · hasta ${l.maxBullets} balas` : ''}</span>
+                <EdgeBadge edgePercent={l.edgePercent} />
+              </div>
             </div>
           ))}
         </div>

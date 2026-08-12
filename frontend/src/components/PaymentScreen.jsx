@@ -3,6 +3,7 @@ import { Check, Copy, Clock, ExternalLink, Loader2, RefreshCw, ShieldCheck } fro
 import { fmtUSDT, NETWORKS, minutesLeft, txExplorerUrl } from '../format.js';
 import { api } from '../api.js';
 import ChatThread from './ChatThread.jsx';
+import EdgeBadge from './EdgeBadge.jsx';
 
 const POLL_MS = 20000;
 
@@ -56,12 +57,15 @@ export default function PaymentScreen({ purchase, onUpdated }) {
       )}
       <p className="pk-ivory-dim text-sm">{purchase.productName} · {purchase.percent}% de acción</p>
       {purchase.productType === 'package' && purchase.legs && (
-        <div className="pk-bg pk-border border rounded-xl p-3 flex flex-col gap-1">
+        <div className="pk-bg pk-border border rounded-xl p-3 flex flex-col gap-2">
           <p className="text-xs pk-ivory-dim mb-0.5">Incluye:</p>
           {purchase.legs.map((l) => (
-            <div key={l.id} className="flex items-center justify-between text-xs pk-mono gap-3">
+            <div key={l.id} className="flex items-center justify-between pk-detail-text pk-mono gap-3 flex-wrap">
               <span className="pk-ivory">{l.name}</span>
-              <span className="pk-ivory-dim text-right">{fmtUSDT(l.buyInMicro)} USDT · venta {Number(l.markup).toFixed(2)}x</span>
+              <div className="flex items-center gap-2">
+                <span className="pk-ivory-dim text-right">{fmtUSDT(l.buyInMicro)} USDT · venta {Number(l.markup).toFixed(2)}x</span>
+                <EdgeBadge edgePercent={l.edgePercent} />
+              </div>
             </div>
           ))}
           {purchase.notes && <p className="text-xs pk-straw pt-1.5 pk-border border-t mt-0.5">{purchase.notes}</p>}

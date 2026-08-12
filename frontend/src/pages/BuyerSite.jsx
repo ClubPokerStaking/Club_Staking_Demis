@@ -6,6 +6,7 @@ import { fmtUSDT, LIVE_STATUS_MAP } from '../format.js';
 import BuyForm from '../components/BuyForm.jsx';
 import PaymentScreen from '../components/PaymentScreen.jsx';
 import ChatThread from '../components/ChatThread.jsx';
+import EdgeBadge from '../components/EdgeBadge.jsx';
 
 export default function BuyerSite() {
   const { slug } = useParams();
@@ -190,11 +191,12 @@ export default function BuyerSite() {
                           {fmtUSDT(item.pricePerPercentMicro)} / 1%
                         </span>
                       </div>
-                      <div className="flex items-center gap-3 text-xs pk-ivory-dim pk-mono">
+                      <div className="flex items-center gap-3 pk-detail-text pk-ivory-dim pk-mono flex-wrap">
                         {item.markup != null && <span>Markup {Number(item.markup).toFixed(2)}x</span>}
                         {item.maxBullets > 1 && <span>Hasta {item.maxBullets} balas</span>}
                         {item.roiEstimado != null && <span>ROI est. {item.roiEstimado}%</span>}
                         {isPackage && item.avgRoiPercent != null && <span className="pk-gold">ROI est. paquete {item.avgRoiPercent}%</span>}
+                        {isPackage && <EdgeBadge edgePercent={item.avgEdgePercent} />}
                       </div>
                       {isPackage && (
                         <button
@@ -206,11 +208,14 @@ export default function BuyerSite() {
                         </button>
                       )}
                       {isPackage && expanded && (
-                        <div className="pk-bg pk-border border rounded-xl p-3 flex flex-col gap-1.5">
+                        <div className="pk-bg pk-border border rounded-xl p-3 flex flex-col gap-2">
                           {item.legs.map((l) => (
-                            <div key={l.id} className="flex items-center justify-between text-xs pk-mono gap-3">
+                            <div key={l.id} className="flex items-center justify-between pk-detail-text pk-mono gap-3 flex-wrap">
                               <span className="pk-ivory">{l.name}</span>
-                              <span className="pk-ivory-dim text-right">{fmtUSDT(l.buyInMicro)} USDT · venta {Number(l.markup).toFixed(2)}x{l.roiEstimado != null ? ` · ROI ${l.roiEstimado}%` : ''}{l.maxBullets > 1 ? ` · hasta ${l.maxBullets} balas` : ''}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="pk-ivory-dim text-right">{fmtUSDT(l.buyInMicro)} USDT · venta {Number(l.markup).toFixed(2)}x{l.roiEstimado != null ? ` · ROI ${l.roiEstimado}%` : ''}{l.maxBullets > 1 ? ` · hasta ${l.maxBullets} balas` : ''}</span>
+                                <EdgeBadge edgePercent={l.edgePercent} />
+                              </div>
                             </div>
                           ))}
                           {item.notes && <p className="text-xs pk-straw pt-1.5 pk-border border-t mt-0.5">{item.notes}</p>}
@@ -278,11 +283,14 @@ export default function BuyerSite() {
                   </div>
                   <p className="pk-ivory-dim text-sm pk-mono">{lookupResult.percent}% · {fmtUSDT(lookupResult.uniqueAmountMicro)} USDT</p>
                   {lookupResult.productType === 'package' && lookupResult.legs && (
-                    <div className="pk-bg pk-border border rounded-xl p-3 mt-2 flex flex-col gap-1">
+                    <div className="pk-bg pk-border border rounded-xl p-3 mt-2 flex flex-col gap-2">
                       {lookupResult.legs.map((l) => (
-                        <div key={l.id} className="flex items-center justify-between text-xs pk-mono gap-3">
+                        <div key={l.id} className="flex items-center justify-between pk-detail-text pk-mono gap-3 flex-wrap">
                           <span className="pk-ivory">{l.name}</span>
-                          <span className="pk-ivory-dim text-right">{fmtUSDT(l.buyInMicro)} USDT · venta {Number(l.markup).toFixed(2)}x</span>
+                          <div className="flex items-center gap-2">
+                            <span className="pk-ivory-dim text-right">{fmtUSDT(l.buyInMicro)} USDT · venta {Number(l.markup).toFixed(2)}x</span>
+                            <EdgeBadge edgePercent={l.edgePercent} />
+                          </div>
                         </div>
                       ))}
                       {lookupResult.notes && <p className="text-xs pk-straw pt-1.5 pk-border border-t mt-0.5">{lookupResult.notes}</p>}
