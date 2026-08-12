@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Trophy, Search, Lock, RefreshCw, Loader2, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { Trophy, Search, Lock, RefreshCw, Loader2, Clock, ChevronDown, ChevronUp, Eye, EyeOff } from 'lucide-react';
 import { api } from '../api.js';
 import { fmtUSDT, LIVE_STATUS_MAP } from '../format.js';
 import BuyForm from '../components/BuyForm.jsx';
@@ -13,6 +13,7 @@ export default function BuyerSite() {
   const [locked, setLocked] = useState(false);
   const [gateInput, setGateInput] = useState('');
   const [gateError, setGateError] = useState('');
+  const [showGateInput, setShowGateInput] = useState(false);
 
   const [view, setView] = useState('browse');
   const [items, setItems] = useState([]);
@@ -103,18 +104,31 @@ export default function BuyerSite() {
           <Trophy size={24} className="pk-gold mx-auto mb-2" />
           <h2 className="pk-display font-semibold text-lg mb-1">{site?.siteName || 'Venta de Acción'}</h2>
           <p className="pk-ivory-dim text-sm mb-4">Ingresá la clave de acceso para ver los torneos.</p>
-          <input
-            type="password"
-            value={gateInput}
-            onChange={(e) => setGateInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && checkGate()}
-            className="w-full pk-bg pk-border border pk-ivory rounded-lg px-3 py-2 mb-3 text-center focus:outline-none"
-            placeholder="Clave de acceso"
-          />
-          {gateError && <p className="pk-brick text-sm mb-2">{gateError}</p>}
-          <button type="button" onClick={checkGate} className="w-full pk-bg-gold pk-onGold font-medium rounded-lg py-2 hover:opacity-90">
-            Entrar
-          </button>
+          <form onSubmit={(e) => { e.preventDefault(); checkGate(); }}>
+            <div className="relative mb-3">
+              <input
+                type={showGateInput ? 'text' : 'password'}
+                name="site-passcode"
+                autoComplete="current-password"
+                value={gateInput}
+                onChange={(e) => setGateInput(e.target.value)}
+                className="w-full pk-bg pk-border border pk-ivory rounded-lg px-3 py-2 pr-10 text-center focus:outline-none"
+                placeholder="Clave de acceso"
+              />
+              <button
+                type="button"
+                onClick={() => setShowGateInput((s) => !s)}
+                className="pk-ivory-dim hover:opacity-80"
+                style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)' }}
+              >
+                {showGateInput ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            {gateError && <p className="pk-brick text-sm mb-2">{gateError}</p>}
+            <button type="submit" className="w-full pk-bg-gold pk-onGold font-medium rounded-lg py-2 hover:opacity-90">
+              Entrar
+            </button>
+          </form>
         </div>
       </div>
     );
