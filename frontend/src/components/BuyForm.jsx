@@ -45,7 +45,10 @@ export default function BuyForm({ product, onSubmit }) {
         )}
         {isPackage && product.avgRoiPercent != null && (
           <div className="pk-package-highlight-box mt-3">
-            <p className="pk-detail-text pk-gold pk-mono">ROI est. paquete: {product.avgRoiPercent}%{product.avgMarkup != null ? ` · Markup promedio ${Number(product.avgMarkup).toFixed(2)}x` : ''}</p>
+            <div className="flex items-center gap-3 flex-wrap pk-detail-text pk-gold pk-mono">
+              <span>ROI est. paquete: {product.avgRoiPercent}%</span>
+              {product.avgMarkup != null && <span>Markup promedio {Number(product.avgMarkup).toFixed(2)}x</span>}
+            </div>
             <EdgeBadge edgePercent={product.avgEdgePercent} variant="hero" label="Tu ventaja neta en este paquete" fullWidth />
             <p className="text-[11px] pk-ivory-dim opacity-70">Ventaja estimada sobre el promedio — no incluye el upside de un resultado grande (mesa final, premio mayor).</p>
           </div>

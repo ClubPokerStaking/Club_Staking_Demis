@@ -208,9 +208,10 @@ export default function BuyerSite() {
                       </div>
                       {isPackage && item.avgRoiPercent != null && (
                         <div className="pk-package-highlight-box">
-                          <p className="pk-detail-text pk-gold pk-mono">
-                            ROI est. paquete {item.avgRoiPercent}%{item.avgMarkup != null ? ` · Markup promedio ${Number(item.avgMarkup).toFixed(2)}x` : ''}
-                          </p>
+                          <div className="flex items-center gap-3 flex-wrap pk-detail-text pk-gold pk-mono">
+                            <span>ROI est. paquete {item.avgRoiPercent}%</span>
+                            {item.avgMarkup != null && <span>Markup promedio {Number(item.avgMarkup).toFixed(2)}x</span>}
+                          </div>
                           {item.avgEdgePercent != null && (
                             <EdgeBadge edgePercent={item.avgEdgePercent} variant="hero" label="Ventaja para vos" fullWidth />
                           )}
