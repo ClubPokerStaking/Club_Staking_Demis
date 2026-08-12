@@ -69,6 +69,10 @@ model Package {
 
   name             String
   totalPercent     Float
+  // Condiciones/notas visibles para el comprador (ej. "todo lo que no se
+  // juega se devuelve") — a diferencia de liveNote, esto se carga al
+  // armar el paquete y no cambia con el estado en vivo.
+  notes            String?
   walletAddress    String
   walletAddressEvm String?
   deadline         String?

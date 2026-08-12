@@ -7,6 +7,7 @@ function emptyLeg() {
 export const emptyPackageForm = {
   name: '',
   totalPercent: '100',
+  notes: '',
   walletAddress: '',
   walletAddressEvm: '',
   deadline: '',
@@ -17,6 +18,7 @@ export function packageFormToEditState(pkg) {
   return {
     name: pkg.name,
     totalPercent: String(pkg.totalPercent || 100),
+    notes: pkg.notes || '',
     walletAddress: pkg.walletAddress,
     walletAddressEvm: pkg.walletAddressEvm || '',
     deadline: pkg.deadline || '',
@@ -59,6 +61,10 @@ export default function PackageForm({ form, onChange, editing, onSubmit, onCance
   }, 0);
   const totalBuyIn = form.legs.reduce((sum, l) => sum + (Number(l.buyIn) || 0), 0);
   const maxPossible = form.legs.reduce((sum, l) => sum + (Number(l.buyIn) || 0) * (Number(l.maxBullets) || 1), 0);
+  const legsWithRoi = form.legs.filter((l) => l.roiEstimado !== '' && l.roiEstimado != null);
+  const avgRoi = legsWithRoi.length > 0
+    ? legsWithRoi.reduce((sum, l) => sum + (Number(l.roiEstimado) || 0), 0) / legsWithRoi.length
+    : null;
 
   return (
     <div className="pk-surface pk-border border rounded-2xl p-5 flex flex-col gap-4">
@@ -91,7 +97,7 @@ export default function PackageForm({ form, onChange, editing, onSubmit, onCance
       {pricePerPercent > 0 && (
         <div className="pk-bg-gold-soft rounded-lg px-3 py-2 flex flex-col gap-1">
           <p className="text-sm pk-gold pk-mono">Precio por 1% del paquete (automático) → {pricePerPercent.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} USDT</p>
-          <p className="text-xs pk-ivory-dim pk-mono">Buy-in combinado: {totalBuyIn.toLocaleString('es-AR', { minimumFractionDigits: 2 })} USDT</p>
+          <p className="text-xs pk-ivory-dim pk-mono">Buy-in combinado: {totalBuyIn.toLocaleString('es-AR', { minimumFractionDigits: 2 })} USDT{avgRoi != null ? ` · ROI promedio del paquete: ${avgRoi.toFixed(1)}%` : ''}</p>
         </div>
       )}
       {maxPossible > totalBuyIn && (
@@ -110,6 +116,17 @@ export default function PackageForm({ form, onChange, editing, onSubmit, onCance
           <input placeholder="ej: 15/08" value={form.deadline} onChange={(e) => setField('deadline', e.target.value)} className={inputCls} />
         </label>
       </div>
+      <label className="text-sm pk-ivory-dim">
+        Condiciones para el comprador (opcional)
+        <textarea
+          placeholder='ej: "Todo lo que no se juega se devuelve"'
+          value={form.notes}
+          onChange={(e) => setField('notes', e.target.value)}
+          rows={2}
+          className={inputCls}
+          style={{ resize: 'vertical' }}
+        />
+      </label>
       <label className="text-sm pk-ivory-dim">
         Wallet USDT (TRC20) para recibir
         <input placeholder="T..." value={form.walletAddress} onChange={(e) => setField('walletAddress', e.target.value)} className={`${inputCls} pk-mono`} />

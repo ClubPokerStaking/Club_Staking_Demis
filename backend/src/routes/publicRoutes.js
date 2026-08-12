@@ -8,7 +8,7 @@ import { loadOrganizerPublic } from '../middleware/loadOrganizerPublic.js';
 import { buyerGateFor } from '../middleware/buyerGate.js';
 import { availablePercent, genAmountSuffix, genCode } from '../services/amounts.js';
 import { verifyPurchase, NETWORKS } from '../services/chainVerify.js';
-import { packagePricePerPercentMicro, packageBuyInMicro, packageMaxPossibleMicro, serializeLeg } from '../services/packages.js';
+import { packagePricePerPercentMicro, packageBuyInMicro, packageMaxPossibleMicro, packageAvgRoiPercent, serializeLeg } from '../services/packages.js';
 import { HttpError, asyncRoute } from '../httpError.js';
 
 export const publicRoutes = Router();
@@ -48,6 +48,7 @@ function serializePackagePublic(pkg, purchases) {
     id: pkg.id,
     name: pkg.name,
     totalPercent: pkg.totalPercent,
+    notes: pkg.notes,
     hasEvm: !!pkg.walletAddressEvm,
     deadline: pkg.deadline,
     liveStatus: pkg.liveStatus,
@@ -57,6 +58,7 @@ function serializePackagePublic(pkg, purchases) {
     buyInMicro: packageBuyInMicro(pkg.legs),
     pricePerPercentMicro: packagePricePerPercentMicro(pkg.legs),
     maxPossibleMicro: packageMaxPossibleMicro(pkg.legs),
+    avgRoiPercent: packageAvgRoiPercent(pkg.legs),
     availablePercent: availablePercent(pkg, purchases),
   };
 }
@@ -74,6 +76,7 @@ function serializePurchaseOwner(p) {
     tournamentId: p.tournamentId,
     tournamentName: productType === 'tournament' ? product?.name : undefined,
     legs: productType === 'package' && product?.legs ? product.legs.map(serializeLeg) : undefined,
+    notes: productType === 'package' ? product?.notes : undefined,
     liveStatus: product?.liveStatus,
     liveNote: product?.liveNote,
     percent: p.percent,

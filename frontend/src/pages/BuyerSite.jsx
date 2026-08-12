@@ -194,6 +194,7 @@ export default function BuyerSite() {
                         {item.markup != null && <span>Markup {Number(item.markup).toFixed(2)}x</span>}
                         {item.maxBullets > 1 && <span>Hasta {item.maxBullets} balas</span>}
                         {item.roiEstimado != null && <span>ROI est. {item.roiEstimado}%</span>}
+                        {isPackage && item.avgRoiPercent != null && <span className="pk-gold">ROI est. paquete {item.avgRoiPercent}%</span>}
                       </div>
                       {isPackage && (
                         <button
@@ -207,11 +208,12 @@ export default function BuyerSite() {
                       {isPackage && expanded && (
                         <div className="pk-bg pk-border border rounded-xl p-3 flex flex-col gap-1.5">
                           {item.legs.map((l) => (
-                            <div key={l.id} className="flex items-center justify-between text-xs pk-mono">
+                            <div key={l.id} className="flex items-center justify-between text-xs pk-mono gap-3">
                               <span className="pk-ivory">{l.name}</span>
-                              <span className="pk-ivory-dim">{fmtUSDT(l.buyInMicro)} USDT{l.roiEstimado != null ? ` · ROI ${l.roiEstimado}%` : ''}{l.maxBullets > 1 ? ` · hasta ${l.maxBullets} balas` : ''}</span>
+                              <span className="pk-ivory-dim text-right">{fmtUSDT(l.buyInMicro)} USDT · venta {Number(l.markup).toFixed(2)}x{l.roiEstimado != null ? ` · ROI ${l.roiEstimado}%` : ''}{l.maxBullets > 1 ? ` · hasta ${l.maxBullets} balas` : ''}</span>
                             </div>
                           ))}
+                          {item.notes && <p className="text-xs pk-straw pt-1.5 pk-border border-t mt-0.5">{item.notes}</p>}
                         </div>
                       )}
                       {item.deadline && <p className="text-xs pk-ivory-dim flex items-center gap-1"><Clock size={12} /> Cierra: {item.deadline}</p>}
@@ -278,11 +280,12 @@ export default function BuyerSite() {
                   {lookupResult.productType === 'package' && lookupResult.legs && (
                     <div className="pk-bg pk-border border rounded-xl p-3 mt-2 flex flex-col gap-1">
                       {lookupResult.legs.map((l) => (
-                        <div key={l.id} className="flex items-center justify-between text-xs pk-mono">
+                        <div key={l.id} className="flex items-center justify-between text-xs pk-mono gap-3">
                           <span className="pk-ivory">{l.name}</span>
-                          <span className="pk-ivory-dim">{fmtUSDT(l.buyInMicro)} USDT</span>
+                          <span className="pk-ivory-dim text-right">{fmtUSDT(l.buyInMicro)} USDT · venta {Number(l.markup).toFixed(2)}x</span>
                         </div>
                       ))}
+                      {lookupResult.notes && <p className="text-xs pk-straw pt-1.5 pk-border border-t mt-0.5">{lookupResult.notes}</p>}
                     </div>
                   )}
                   {lookupResult.liveNote && <p className="pk-ivory-dim text-xs mt-0.5">{lookupResult.liveNote}</p>}

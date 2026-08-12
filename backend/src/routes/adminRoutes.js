@@ -4,7 +4,7 @@ import { requireOrganizerAuth } from '../middleware/requireOrganizerAuth.js';
 import { hashPassword } from '../auth/password.js';
 import { availablePercent } from '../services/amounts.js';
 import { verifyPurchase, testEtherscanKey } from '../services/chainVerify.js';
-import { packagePricePerPercentMicro, packageBuyInMicro, packageMaxPossibleMicro, serializeLeg } from '../services/packages.js';
+import { packagePricePerPercentMicro, packageBuyInMicro, packageMaxPossibleMicro, packageAvgRoiPercent, serializeLeg } from '../services/packages.js';
 import { HttpError, asyncRoute } from '../httpError.js';
 
 export const adminRoutes = Router();
@@ -122,6 +122,7 @@ function serializePackageAdmin(pkg, purchases) {
     id: pkg.id,
     name: pkg.name,
     totalPercent: pkg.totalPercent,
+    notes: pkg.notes,
     walletAddress: pkg.walletAddress,
     walletAddressEvm: pkg.walletAddressEvm,
     deadline: pkg.deadline,
@@ -133,6 +134,7 @@ function serializePackageAdmin(pkg, purchases) {
     buyInMicro: packageBuyInMicro(pkg.legs),
     pricePerPercentMicro: packagePricePerPercentMicro(pkg.legs),
     maxPossibleMicro: packageMaxPossibleMicro(pkg.legs),
+    avgRoiPercent: packageAvgRoiPercent(pkg.legs),
     availablePercent: availablePercent(pkg, purchases),
   };
 }
@@ -173,6 +175,7 @@ function parsePackageInput(body) {
   return {
     name,
     totalPercent,
+    notes: String(body.notes || '').trim().slice(0, 500) || null,
     walletAddress,
     walletAddressEvm: String(body.walletAddressEvm || '').trim() || null,
     deadline: String(body.deadline || '').trim() || null,

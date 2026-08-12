@@ -19,6 +19,16 @@ export function packageMaxPossibleMicro(legs) {
   return legs.reduce((sum, leg) => sum + leg.buyInMicro * leg.maxBullets, 0);
 }
 
+// Promedio simple del ROI estimado de cada torneo incluido (ignora los
+// que no tienen ROI cargado). Es una referencia informativa para el
+// comprador, no afecta el precio.
+export function packageAvgRoiPercent(legs) {
+  const withRoi = legs.filter((l) => l.roiEstimado != null);
+  if (withRoi.length === 0) return null;
+  const sum = withRoi.reduce((s, l) => s + l.roiEstimado, 0);
+  return Math.round((sum / withRoi.length) * 10) / 10;
+}
+
 export function serializeLeg(leg) {
   return {
     id: leg.id,
