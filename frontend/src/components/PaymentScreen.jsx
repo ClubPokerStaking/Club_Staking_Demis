@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Check, Copy, Clock, ExternalLink, Loader2, RefreshCw, ShieldCheck } from 'lucide-react';
+import { Check, Copy, Clock, ExternalLink, Loader2, RefreshCw, ShieldCheck, Send } from 'lucide-react';
 import { fmtUSDT, NETWORKS, minutesLeft, txExplorerUrl } from '../format.js';
 import { api } from '../api.js';
 import ChatThread from './ChatThread.jsx';
@@ -120,7 +120,21 @@ export default function PaymentScreen({ purchase, onUpdated }) {
 
       <div className="pk-border border-t pt-3 text-center">
         <p className="text-xs pk-ivory-dim">Tu código de compra (guardalo para consultar el estado más tarde)</p>
-        <p className="text-lg pk-mono font-bold tracking-widest pk-ivory">{purchase.code}</p>
+        <div className="flex items-center justify-center gap-2 mt-1">
+          <p className="text-lg pk-mono font-bold tracking-widest pk-ivory">{purchase.code}</p>
+          <button onClick={() => copy(purchase.code, 'code')} className="pk-ivory-dim hover:opacity-70 shrink-0">
+            {copiedField === 'code' ? <Check size={16} className="pk-gold" /> : <Copy size={16} />}
+          </button>
+        </div>
+        {purchase.telegramLink && (
+          purchase.telegramConnected ? (
+            <p className="text-xs pk-gold mt-2 flex items-center justify-center gap-1"><Send size={12} /> Conectado por Telegram — te avisamos ahí</p>
+          ) : (
+            <a href={purchase.telegramLink} target="_blank" rel="noreferrer" className="text-xs pk-gold hover:underline mt-2 flex items-center justify-center gap-1">
+              <Send size={12} /> Conectar Telegram para recibir tu código y avisos
+            </a>
+          )
+        )}
       </div>
 
       <ChatThread

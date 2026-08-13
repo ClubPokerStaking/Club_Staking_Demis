@@ -5,6 +5,7 @@ import { hashPassword } from '../auth/password.js';
 import { availablePercent } from '../services/amounts.js';
 import { verifyPurchase, testEtherscanKey } from '../services/chainVerify.js';
 import { packageTotalValueMicro, packageBuyInMicro, packageMaxPossibleMicro, packageAvgRoiPercent, packageAvgEdgePercent, packageAvgMarkup, serializeLeg } from '../services/packages.js';
+import { notifyPurchaseConfirmed } from '../services/notify.js';
 import { HttpError, asyncRoute } from '../httpError.js';
 
 export const adminRoutes = Router();
@@ -332,6 +333,10 @@ adminRoutes.put('/purchases/:id/status', asyncRoute(async (req, res) => {
   const status = String(req.body?.status || '');
   if (!['pendiente', 'confirmado', 'rechazado'].includes(status)) throw new HttpError(400, 'Estado inválido');
   const p = await prisma.purchase.update({ where: { id: existing.id }, data: { status } });
+  if (status === 'confirmado' && existing.status !== 'confirmado') {
+    const productName = existing.package?.name || existing.tournament?.name;
+    notifyPurchaseConfirmed(p, productName).catch((err) => console.error('[notify] error:', err.message));
+  }
   res.json(serializePurchaseAdmin({ ...p, tournament: existing.tournament, package: existing.package }));
 }));
 

@@ -1,4 +1,5 @@
 import { prisma } from '../prismaClient.js';
+import { notifyPurchaseConfirmed } from './notify.js';
 
 const USDT_TRC20_CONTRACT = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
 const USDT_ETH_CONTRACT = '0xdAC17F958D2ee523a2206206994597C13D831ec';
@@ -70,10 +71,13 @@ export async function verifyPurchase(purchase, etherscanKey) {
   const match = findMatch(transfers, toAddr, purchase.uniqueAmountMicro, new Date(purchase.createdAt).getTime());
   if (!match) return null;
 
-  return prisma.purchase.update({
+  const updated = await prisma.purchase.update({
     where: { id: purchase.id },
     data: { status: 'confirmado', txHash: match.txHash, lastVerifyAt: new Date() },
   });
+  const productName = purchase.package?.name || purchase.tournament?.name;
+  notifyPurchaseConfirmed(updated, productName).catch((err) => console.error('[notify] error:', err.message));
+  return updated;
 }
 
 export async function testEtherscanKey(etherscanKey) {

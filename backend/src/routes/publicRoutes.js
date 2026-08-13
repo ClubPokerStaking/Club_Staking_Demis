@@ -9,6 +9,7 @@ import { buyerGateFor } from '../middleware/buyerGate.js';
 import { availablePercent, genAmountSuffix, genCode } from '../services/amounts.js';
 import { verifyPurchase, NETWORKS } from '../services/chainVerify.js';
 import { packageOfferingPricePerPercentMicro, packageTotalValueMicro, packageBuyInMicro, packageMaxPossibleMicro, packageAvgRoiPercent, packageAvgEdgePercent, packageAvgMarkup, serializeLeg } from '../services/packages.js';
+import { notifyNewPurchase, telegramDeepLink } from '../services/notify.js';
 import { HttpError, asyncRoute } from '../httpError.js';
 
 export const publicRoutes = Router();
@@ -93,6 +94,8 @@ function serializePurchaseOwner(p) {
     percent: p.percent,
     baseAmountMicro: p.baseAmountMicro,
     uniqueAmountMicro: p.uniqueAmountMicro,
+    telegramConnected: !!p.telegramChatId,
+    telegramLink: telegramDeepLink(p.id),
     network: p.network,
     walletAddress: p.walletAddress,
     status: p.status,
@@ -193,6 +196,7 @@ publicRoutes.post('/:slug/tournaments/:id/purchase', purchaseLimiter, loadOrgani
     return created;
   }, TX_OPTIONS);
 
+  notifyNewPurchase(purchase, purchase.tournament.name).catch((err) => console.error('[notify] error:', err.message));
   res.status(201).json(serializePurchaseOwner(purchase));
 }));
 
@@ -258,6 +262,7 @@ publicRoutes.post('/:slug/packages/:id/purchase', purchaseLimiter, loadOrganizer
     return created;
   }, TX_OPTIONS);
 
+  notifyNewPurchase(purchase, purchase.package.name).catch((err) => console.error('[notify] error:', err.message));
   res.status(201).json(serializePurchaseOwner(purchase));
 }));
 

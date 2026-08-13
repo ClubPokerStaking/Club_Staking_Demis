@@ -132,6 +132,9 @@ model Purchase {
   code              String @unique
   buyerName         String
   buyerContact      String
+  // Se completa cuando el comprador conecta el bot de Telegram (deep link
+  // /start) — a partir de ahí le podemos escribir avisos directamente.
+  telegramChatId    String?
   originWallet      String?
   percent           Float
   baseAmountMicro   Float

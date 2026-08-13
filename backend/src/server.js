@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import { authRoutes } from './routes/authRoutes.js';
 import { publicRoutes } from './routes/publicRoutes.js';
 import { adminRoutes } from './routes/adminRoutes.js';
+import { telegramRoutes } from './routes/telegramRoutes.js';
 import { startPaymentPoller } from './services/poller.js';
 
 const app = express();
@@ -17,6 +18,7 @@ app.get('/api/health', (req, res) => res.json({ ok: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/telegram', telegramRoutes);
 
 app.use((req, res) => res.status(404).json({ error: 'No encontrado' }));
 // eslint-disable-next-line no-unused-vars
