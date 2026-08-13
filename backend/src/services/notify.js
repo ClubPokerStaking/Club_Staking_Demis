@@ -12,7 +12,16 @@ function getTransporter() {
   const user = process.env.GMAIL_USER;
   const pass = process.env.GMAIL_APP_PASSWORD;
   if (!user || !pass) return null;
-  transporter = nodemailer.createTransport({ service: 'gmail', auth: { user, pass } });
+  transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: { user, pass },
+    // Algunos proveedores (Render incluido) no tienen salida IPv6, y la
+    // resolución DNS por defecto puede devolver la dirección IPv6 de
+    // Gmail primero, causando ENETUNREACH. Forzamos IPv4.
+    family: 4,
+  });
   return transporter;
 }
 
