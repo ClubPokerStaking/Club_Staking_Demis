@@ -15,6 +15,11 @@ export async function requireOrganizerAuth(req, res, next) {
   if (!organizer) {
     return res.status(401).json({ error: 'No autenticado' });
   }
+  // Se chequea en cada request (no solo al loguearse) para que un bloqueo
+  // corte el acceso de inmediato, aunque la sesión ya estuviera abierta.
+  if (organizer.blocked) {
+    return res.status(403).json({ error: 'Esta cuenta fue suspendida' });
+  }
   req.organizer = organizer;
   next();
 }

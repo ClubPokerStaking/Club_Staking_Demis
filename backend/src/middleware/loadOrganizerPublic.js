@@ -5,7 +5,10 @@ import { prisma } from '../prismaClient.js';
 // Nunca adjunta etherscanKey, sheetUrl, passwordHash ni buyerPasscodeHash.
 export async function loadOrganizerPublic(req, res, next) {
   const organizer = await prisma.organizer.findUnique({ where: { slug: req.params.slug } });
-  if (!organizer) return res.status(404).json({ error: 'Sitio no encontrado' });
+  // Una cuenta bloqueada se trata como inexistente del lado del comprador
+  // — no hay forma de distinguir "no existe" de "está suspendida" desde
+  // afuera, para no darle pistas a nadie de qué cuentas fueron bloqueadas.
+  if (!organizer || organizer.blocked) return res.status(404).json({ error: 'Sitio no encontrado' });
   req.organizerId = organizer.id;
   req.organizerPublic = {
     siteName: organizer.siteName,

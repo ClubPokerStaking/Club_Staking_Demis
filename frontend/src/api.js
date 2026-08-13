@@ -19,6 +19,15 @@ const post = (path, body) => request(path, { method: 'POST', body: JSON.stringif
 const put = (path, body) => request(path, { method: 'PUT', body: JSON.stringify(body || {}) });
 const del = (path) => request(path, { method: 'DELETE' });
 
+// Panel superadmin: no usa la cookie de sesión de organizador, sino una
+// clave propia (x-platform-admin-key) que el navegador manda en cada
+// pedido — no hay login/sesión, es la misma clave siempre.
+function platformRequest(path, key, options = {}) {
+  const headers = { 'x-platform-admin-key': key };
+  if (options.body) headers['Content-Type'] = 'application/json';
+  return request(path, { ...options, headers });
+}
+
 export const api = {
   // auth
   register: (data) => post('/auth/register', data),
@@ -64,4 +73,10 @@ export const api = {
   adminSaveSiteConfig: (data) => put('/admin/site-config', data),
   adminTestEtherscan: () => post('/admin/test-etherscan'),
   adminPullSheet: () => post('/admin/pull-sheet'),
+
+  // superadmin de la plataforma
+  platformOrganizers: (key) => platformRequest('/platform/organizers', key),
+  platformBlock: (key, id) => platformRequest(`/platform/organizers/${id}/block`, key, { method: 'PUT' }),
+  platformUnblock: (key, id) => platformRequest(`/platform/organizers/${id}/unblock`, key, { method: 'PUT' }),
+  platformDelete: (key, id) => platformRequest(`/platform/organizers/${id}`, key, { method: 'DELETE' }),
 };

@@ -16,6 +16,10 @@ model Organizer {
   slug              String   @unique
   siteName          String
   passwordHash      String
+  // Lo pone el dueño de la plataforma desde el panel superadmin — un
+  // organizador bloqueado no puede loguearse ni su sitio público es
+  // accesible, pero sus datos quedan intactos (reversible).
+  blocked           Boolean  @default(false)
   buyerPasscodeHash String?
   sheetUrl          String?
   etherscanKey      String?

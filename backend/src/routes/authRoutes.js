@@ -80,6 +80,9 @@ authRoutes.post('/login', loginLimiter, async (req, res) => {
   if (!ok) {
     return res.status(401).json({ error: 'Identificador o contraseña incorrectos' });
   }
+  if (organizer.blocked) {
+    return res.status(403).json({ error: 'Esta cuenta fue suspendida' });
+  }
 
   const token = signOrganizerToken(organizer.id);
   res.cookie('organizer_session', token, organizerCookieOptions);
