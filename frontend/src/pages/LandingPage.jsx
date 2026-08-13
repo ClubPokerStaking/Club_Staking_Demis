@@ -16,7 +16,7 @@ export default function LandingPage() {
       <div className="max-w-sm w-full pk-surface pk-border border rounded-2xl p-6 flex flex-col gap-5">
         <div className="text-center">
           <Trophy size={28} className="pk-gold mx-auto mb-2" />
-          <h1 className="pk-display font-semibold text-xl">Venta de Acción</h1>
+          <h1 className="pk-display font-semibold text-xl">Club Staking</h1>
           <p className="pk-ivory-dim text-sm mt-1">Plataforma para organizadores de torneos que venden % de su acción.</p>
         </div>
 

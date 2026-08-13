@@ -102,7 +102,7 @@ export default function BuyerSite() {
       <div className="pk-root pk-bg pk-ivory min-h-screen flex items-center justify-center px-6">
         <div className="max-w-sm w-full pk-surface pk-border border rounded-2xl p-6 text-center">
           <Trophy size={24} className="pk-gold mx-auto mb-2" />
-          <h2 className="pk-display font-semibold text-lg mb-1">{site?.siteName || 'Venta de Acción'}</h2>
+          <h2 className="pk-display font-semibold text-lg mb-1">{site?.siteName || 'Club Staking'}</h2>
           <p className="pk-ivory-dim text-sm mb-4">Ingresá la clave de acceso para ver los torneos.</p>
           <form onSubmit={(e) => { e.preventDefault(); checkGate(); }}>
             <div className="relative mb-3">
