@@ -1,4 +1,11 @@
 import 'dotenv/config';
+import { setDefaultResultOrder } from 'node:dns';
+// Render (y varios otros hosts) no tienen salida IPv6 — sin esto, Node
+// puede resolver un hostname a su dirección IPv6 primero y fallar la
+// conexión con ENETUNREACH (nos pasó con el SMTP de Gmail). nodemailer no
+// tiene forma de forzar esto por su cuenta, así que se configura acá a
+// nivel de proceso.
+setDefaultResultOrder('ipv4first');
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';

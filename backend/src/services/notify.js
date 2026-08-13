@@ -12,15 +12,14 @@ function getTransporter() {
   const user = process.env.GMAIL_USER;
   const pass = process.env.GMAIL_APP_PASSWORD;
   if (!user || !pass) return null;
+  // La preferencia por IPv4 se fuerza a nivel de proceso en server.js
+  // (dns.setDefaultResultOrder) — nodemailer no reenvía una opción
+  // "family" propia a la conexión real, así que ponerla acá no hace nada.
   transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
     secure: true,
     auth: { user, pass },
-    // Algunos proveedores (Render incluido) no tienen salida IPv6, y la
-    // resolución DNS por defecto puede devolver la dirección IPv6 de
-    // Gmail primero, causando ENETUNREACH. Forzamos IPv4.
-    family: 4,
   });
   return transporter;
 }
